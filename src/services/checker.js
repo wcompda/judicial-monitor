@@ -3,6 +3,7 @@ const { query } = require('../database/db');
 const { buscarTodosProcessos, buscarMovimentacoes } = require('./datajud');
 const { analyzeRisk } = require('./riskAnalyzer');
 const { notificar } = require('./notifications');
+const { buscarContratos } = require('./pncp');
 
 async function verificarProcessos() {
   console.log(`\n[CHECKER] Iniciando verificação — ${new Date().toLocaleString('pt-BR')}`);
@@ -76,6 +77,24 @@ async function verificarProcessos() {
     }
 
     totalProcessos += processos.length;
+  }
+
+  // ── Contratos PNCP + Portal da Transparência ────────────────────────────
+  const cpf = process.env.USER_CPF || '';
+  const cnpj = process.env.USER_CNPJ || '';
+  if (cpf || cnpj) {
+    console.log(`  [CONTRATOS] Buscando contratos PNCP/Transparência...`);
+    const contratos = await buscarContratos(cpf, cnpj);
+    for (const c of contratos) {
+      await query(`
+        INSERT INTO processos (id, numero, tribunal, classe, assunto, situacao, risco, ultima_movimentacao, data_distribuicao, partes, valor_causa, updated_at)
+        VALUES ($1,$2,$3,$4,$5,$6,'azul',$7,$8,$9,$10,NOW())
+        ON CONFLICT (id) DO UPDATE SET ultima_movimentacao=$7, situacao=$6, updated_at=NOW()
+      `, [c.id, c.numero, c.tribunal, c.classe, c.assunto, c.situacao,
+          c.ultima_movimentacao, c.data_distribuicao, c.partes, c.valor_causa]);
+    }
+    console.log(`  [CONTRATOS] ${contratos.length} contrato(s) sincronizado(s)`);
+    totalProcessos += contratos.length;
   }
 
   await query(`UPDATE config SET valor = $1 WHERE chave = 'ultima_verificacao'`, [new Date().toISOString()]);
