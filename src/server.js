@@ -104,6 +104,23 @@ app.get('/api/processos/:id', autenticar, async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
+app.get('/api/processos/:id/links', autenticar, async (req, res) => {
+  try {
+    const { rows } = await query(`SELECT numero FROM processos WHERE id = $1`, [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, message: 'Processo não encontrado' });
+    const numero = rows[0].numero;
+    const cleaned = numero.replace(/\D/g, '');
+    if (cleaned.length !== 20) return res.json({ success: true, data: [] });
+    const links = [
+      { label: 'TJMG (eproc)', url: `https://eproc-consulta-publica-1g.tjmg.jus.br/eproc/externo_controlador.php?acao=processo_consulta_publica&numero_processo=${numero}` },
+      { label: 'TJMG (PJe)', url: `https://pje-consulta-publica.tjmg.jus.br/consultapublica/busca.do?numero_processo=${numero}` },
+      { label: 'JusBrasil', url: `https://www.jusbrasil.com.br/processos/${numero}` },
+      { label: 'Escavador', url: `https://www.escavador.com.br/processo/${numero}` },
+    ];
+    res.json({ success: true, data: links });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
 app.delete('/api/processos/:id', autenticar, async (req, res) => {
   await query(`DELETE FROM movimentacoes WHERE processo_id = $1`, [req.params.id]);
   await query(`DELETE FROM processos WHERE id = $1`, [req.params.id]);
