@@ -69,11 +69,12 @@ async function initSchema() {
   await query(`INSERT INTO config (chave, valor) VALUES ('intervalo_horas', '6') ON CONFLICT DO NOTHING`);
 
   // Pessoa padrão
-  const { rows } = await query(`SELECT id FROM pessoas WHERE cpf = $1`, ['64648524691']);
-  if (rows.length === 0) {
+  const userCpf = process.env.USER_CPF || '';
+  const { rows } = await query(`SELECT id FROM pessoas WHERE cpf = $1`, [userCpf]);
+  if (rows.length === 0 && userCpf) {
     await query(`INSERT INTO pessoas (nome, cpf, email) VALUES ($1, $2, $3)`, [
       process.env.USER_NAME || 'WENRRY JOSE RODRIGUES',
-      '64648524691',
+      userCpf,
       process.env.EMAIL_TO || ''
     ]);
   }

@@ -9,10 +9,10 @@ services:
       - key: NODE_ENV
         value: production
       - key: APP_PASSWORD
-        value: Wcom2026
+        sync: false
       - key: USER_NAME
-        value: WENRRY JOSE RODRIGUES
+        sync: false
       - key: INTERVALO_HORAS
-        value: "6"
+        sync: false
       - key: DATABASE_URL
         sync: false
