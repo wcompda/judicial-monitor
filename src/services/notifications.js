@@ -20,8 +20,13 @@ function buildHtml(processo, movimentacao, risco, nomePessoa) {
   const aviso = risco === 'vermelho'
     ? '<div style="margin-top:20px;padding:16px;background:#fef2f2;border-left:4px solid #dc2626;border-radius:6px"><strong style="color:#dc2626">ACAO NECESSARIA:</strong><p style="margin:8px 0 0;color:#7f1d1d">Esta movimentacao pode indicar risco de prejuizo. Consulte seu advogado imediatamente.</p></div>'
     : '';
+  const logoUrl = process.env.BASE_URL ? process.env.BASE_URL + '/logo.png' : '';
+  const logoHtml = logoUrl
+    ? '<img src="' + logoUrl + '" alt="Logo" style="height:48px;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto" />'
+    : '';
   return '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">'
     + '<div style="background:' + cor.bg + ';padding:20px;text-align:center;border-radius:12px 12px 0 0">'
+    + logoHtml
     + '<h1 style="color:white;margin:0">' + cor.emoji + ' ' + cor.label + '</h1>'
     + '<p style="color:rgba(255,255,255,.9);margin:8px 0 0">JudicialMonitor - ' + nomePessoa + '</p>'
     + '</div>'
@@ -35,6 +40,7 @@ function buildHtml(processo, movimentacao, risco, nomePessoa) {
     + '<tr><td style="padding:10px;font-weight:bold">Movimentacao</td><td style="padding:10px">' + movimentacao.descricao + '</td></tr>'
     + '</table>' + aviso + '</div>'
     + '<div style="background:#f9fafb;padding:16px;text-align:center;border-radius:0 0 12px 12px">'
+    + (logoUrl ? '<img src="' + logoUrl + '" alt="Logo" style="height:28px;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto" />' : '')
     + '<p style="margin:0;color:#6b7280;font-size:12px">JudicialMonitor - Verificacao automatica a cada 6 horas</p>'
     + '</div></div>';
 }
