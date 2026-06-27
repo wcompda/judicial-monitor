@@ -60,6 +60,36 @@ async function buscarPorNome(nome, tribunal) {
   }
 }
 
+async function buscarPorCpf(cpf, tribunal) {
+  const cpfLimpo = cpf.replace(/\D/g, '');
+  try {
+    const body = {
+      query: {
+        nested: {
+          path: 'partes',
+          query: {
+            bool: {
+              should: [
+                { match: { 'partes.documento.valor': cpfLimpo } },
+                { match: { 'partes.cpf': cpfLimpo } }
+              ],
+              minimum_should_match: 1
+            }
+          }
+        }
+      },
+      size: 20,
+      sort: [{ 'dataAjuizamento': { order: 'desc' } }]
+    };
+
+    const url = `${BASE_URL}/api_publica_${tribunal}/_search`;
+    const { data } = await axios.post(url, body, { headers, timeout: 10000 });
+    return (data.hits?.hits || []).map(hit => normalizeProcesso(hit._source, tribunal));
+  } catch {
+    return [];
+  }
+}
+
 async function buscarPorNumero(numero) {
   const numeroLimpo = numero.replace(/\D/g, '');
   const resultados = [];
@@ -102,16 +132,23 @@ async function buscarMovimentacoes(numero, tribunal) {
   }
 }
 
-async function buscarTodosProcessos(nome) {
-  console.log(`Buscando processos para: ${nome}`);
+async function buscarTodosProcessos(nome, cpf) {
+  console.log(`Buscando processos para: ${nome}${cpf ? ` (CPF: ${cpf})` : ''}`);
   const todos = [];
+  const idsVistos = new Set();
 
   for (const t of TRIBUNAIS) {
     console.log(`  -> Consultando ${t.nome}...`);
-    const processos = await buscarPorNome(nome, t.codigo);
-    todos.push(...processos);
-    // Pequeno delay para não sobrecarregar a API
-    await new Promise(r => setTimeout(r, 300));
+    const porNome = await buscarPorNome(nome, t.codigo);
+    const porCpf = cpf ? await buscarPorCpf(cpf, t.codigo) : [];
+
+    for (const p of [...porNome, ...porCpf]) {
+      if (!idsVistos.has(p.id)) {
+        idsVistos.add(p.id);
+        todos.push(p);
+      }
+    }
+    await new Promise(r => setTimeout(r, 200));
   }
 
   console.log(`Total encontrado: ${todos.length} processos`);

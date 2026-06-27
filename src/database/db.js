@@ -28,6 +28,7 @@ async function initSchema() {
       data_distribuicao TEXT,
       partes TEXT,
       valor_causa NUMERIC,
+      observacoes TEXT DEFAULT '',
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
@@ -59,10 +60,49 @@ async function initSchema() {
 
     CREATE TABLE IF NOT EXISTS sessoes (
       token TEXT PRIMARY KEY,
+      usuario_id INTEGER,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       expires_at TIMESTAMPTZ NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS usuarios (
+      id SERIAL PRIMARY KEY,
+      nome TEXT NOT NULL,
+      usuario TEXT UNIQUE NOT NULL,
+      senha TEXT NOT NULL,
+      role TEXT DEFAULT 'viewer',
+      pessoas_ids TEXT DEFAULT '[]',
+      ativo INTEGER DEFAULT 1,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
   `);
+
+  // Migrations
+  await query(`ALTER TABLE processos ADD COLUMN IF NOT EXISTS observacoes TEXT DEFAULT ''`).catch(() => {});
+  await query(`ALTER TABLE sessoes ADD COLUMN IF NOT EXISTS usuario_id INTEGER`).catch(() => {});
+  await query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email TEXT`).catch(() => {});
+  await query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS cpf TEXT`).catch(() => {});
+  await query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS funcao TEXT`).catch(() => {});
+  await query(`CREATE TABLE IF NOT EXISTS cadastro_tokens (
+    token TEXT PRIMARY KEY,
+    nome TEXT NOT NULL,
+    email TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    usado INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )`).catch(() => {});
+
+  // Criar ou sincronizar usuário admin
+  const adminUser = process.env.ADMIN_USER || 'wenrry';
+  const adminPass = process.env.APP_PASSWORD || 'judicial2024';
+  const adminEmail = process.env.EMAIL_TO || '';
+  await query(
+    `INSERT INTO usuarios (nome, usuario, senha, email, role, pessoas_ids)
+     VALUES ($1, $2, $3, $4, 'admin', '[]')
+     ON CONFLICT (usuario) DO UPDATE SET senha = EXCLUDED.senha, email = COALESCE(EXCLUDED.email, usuarios.email)`,
+    [process.env.USER_NAME || 'WENRRY JOSE RODRIGUES', adminUser, adminPass, adminEmail || null]
+  );
+  console.log(`[DB] Admin sincronizado: ${adminUser}`);
 
   // Config padrão
   await query(`INSERT INTO config (chave, valor) VALUES ('ultima_verificacao', $1) ON CONFLICT DO NOTHING`, [new Date(0).toISOString()]);

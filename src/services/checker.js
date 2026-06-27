@@ -17,7 +17,7 @@ async function verificarProcessos() {
 
   for (const pessoa of pessoas) {
     console.log(`  [PESSOA] Verificando: ${pessoa.nome}`);
-    const processos = await buscarTodosProcessos(pessoa.nome);
+    const processos = await buscarTodosProcessos(pessoa.nome, pessoa.cpf);
 
     for (const p of processos) {
       const { rows } = await query(`SELECT * FROM processos WHERE id = $1`, [p.id]);
