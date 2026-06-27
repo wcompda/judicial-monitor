@@ -148,7 +148,7 @@ app.post('/api/solicitar-cadastro', async (req, res) => {
       });
       r.on('error', reject); r.write(body); r.end();
     });
-    res.json({ success: true, message: 'Email de cadastro enviado! Verifique sua caixa de entrada.' });
+    res.json({ success: true, message: 'Solicitação enviada!', link });
   } catch (e) {
     console.error('[SOLICITAR-CADASTRO]', e.message);
     res.status(500).json({ success: false, message: 'Erro: ' + e.message });
