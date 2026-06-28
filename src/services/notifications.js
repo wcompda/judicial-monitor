@@ -74,6 +74,46 @@ async function sendEmail({ processo, movimentacao, risco, pessoa }) {
   }
 }
 
+async function sendWhatsApp({ processo, movimentacao, risco, pessoa }) {
+  const ZAPI_URL      = 'https://api.z-api.io/instances/3F54C3F77B9A42FB81D7EA27A312B1BA/token/052DEACFB706D0C63D912F2F';
+  const ZAPI_TOKEN    = '052DEACFB706D0C63D912F2F';
+  const WA_NUMERO     = process.env.WA_NOTIFY_NUMBER || '5534999520032';
+
+  const cor        = RISK_COLORS[risco] || RISK_COLORS.azul;
+  const nomePessoa = (pessoa && pessoa.nome) ? pessoa.nome : 'WENRRY JOSE RODRIGUES';
+  const data       = new Date(movimentacao.data).toLocaleString('pt-BR');
+  const desc       = movimentacao.descricao.substring(0, 120);
+  const appUrl     = process.env.BASE_URL || 'https://juds.wcom.udi.br';
+
+  const aviso = risco === 'vermelho'
+    ? '\n\n⚠️ *AÇÃO NECESSÁRIA!* Esta movimentação pode indicar risco. Consulte seu advogado.'
+    : '';
+
+  const msg =
+    `${cor.emoji} *JudicialMonitor — ${cor.label}*\n\n` +
+    `👤 *Pessoa:* ${nomePessoa}\n` +
+    `📋 *Processo:* ${processo.numero}\n` +
+    `🏛️ *Tribunal:* ${processo.tribunal}\n` +
+    `📅 *Data:* ${data}\n\n` +
+    `📝 *Movimentação:*\n${desc}` +
+    aviso +
+    `\n\n🔗 ${appUrl}`;
+
+  try {
+    const axios = require('axios');
+    await axios.post(`${ZAPI_URL}/send-text`, {
+      phone: WA_NUMERO,
+      message: msg
+    }, {
+      headers: { 'Content-Type': 'application/json', 'Client-Token': ZAPI_TOKEN },
+      timeout: 10000
+    });
+    console.log('[WHATSAPP] Notificação enviada para ' + WA_NUMERO);
+  } catch (err) {
+    console.error('[WHATSAPP] Erro:', err.message);
+  }
+}
+
 async function sendSMS({ processo, movimentacao, risco, pessoa }) {
   if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
     console.log('[SMS] Credenciais Twilio nao configuradas');
@@ -99,7 +139,7 @@ async function sendSMS({ processo, movimentacao, risco, pessoa }) {
 }
 
 async function notificar(dados) {
-  await Promise.all([sendEmail(dados), sendSMS(dados)]);
+  await Promise.all([sendEmail(dados), sendSMS(dados), sendWhatsApp(dados)]);
 }
 
-module.exports = { notificar, sendEmail, sendSMS };
+module.exports = { notificar, sendEmail, sendSMS, sendWhatsApp };
