@@ -92,6 +92,15 @@ async function initSchema() {
     created_at TIMESTAMPTZ DEFAULT NOW()
   )`).catch(() => {});
 
+  // Tabela de palavras-chave configuráveis
+  await query(`CREATE TABLE IF NOT EXISTS palavras_chave (
+    id SERIAL PRIMARY KEY,
+    palavra TEXT NOT NULL UNIQUE,
+    risco TEXT NOT NULL DEFAULT 'amarelo',
+    ativo INTEGER DEFAULT 1,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )`).catch(() => {});
+
   // Criar ou sincronizar usuário admin
   const adminUser = process.env.ADMIN_USER || 'wenrry';
   const adminPass = process.env.APP_PASSWORD || 'judicial2024';

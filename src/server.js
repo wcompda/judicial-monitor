@@ -475,6 +475,29 @@ app.post('/api/processos/:id/lido', autenticar, async (req, res) => {
 
 // ── Health ───────────────────────────────────────────────────────────────────
 
+// ── Palavras-chave configuráveis ─────────────────────────────────────────────
+
+app.get('/api/palavras-chave', autenticar, async (req, res) => {
+  const { rows } = await query(`SELECT * FROM palavras_chave ORDER BY risco, palavra`);
+  res.json({ success: true, data: rows });
+});
+
+app.post('/api/palavras-chave', autenticar, async (req, res) => {
+  const { palavra, risco } = req.body;
+  if (!palavra || !risco) return res.status(400).json({ success: false, message: 'palavra e risco obrigatórios' });
+  const riscos = ['vermelho','amarelo','verde','azul'];
+  if (!riscos.includes(risco)) return res.status(400).json({ success: false, message: 'risco inválido' });
+  try {
+    await query(`INSERT INTO palavras_chave (palavra, risco) VALUES ($1, $2) ON CONFLICT (palavra) DO UPDATE SET risco=$2, ativo=1`, [palavra.toLowerCase().trim(), risco]);
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+app.delete('/api/palavras-chave/:id', autenticar, async (req, res) => {
+  await query(`DELETE FROM palavras_chave WHERE id = $1`, [req.params.id]);
+  res.json({ success: true });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ success: true, timestamp: new Date().toISOString(), version: '2.0.0', db: 'postgresql' });
 });

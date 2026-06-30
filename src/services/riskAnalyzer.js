@@ -1,5 +1,23 @@
 const axios = require('axios');
 
+// ── Cache de palavras-chave do banco (5 min TTL) ─────────────────────────────
+let _cacheDB = null;
+let _cacheTTL = 0;
+
+async function getKeywordsDB() {
+  if (_cacheDB && Date.now() < _cacheTTL) return _cacheDB;
+  try {
+    const { query } = require('../database/db');
+    const { rows } = await query(`SELECT palavra, risco FROM palavras_chave WHERE ativo = 1`);
+    _cacheDB = { vermelho: [], amarelo: [], verde: [] };
+    for (const r of rows) {
+      if (_cacheDB[r.risco]) _cacheDB[r.risco].push(r.palavra);
+    }
+    _cacheTTL = Date.now() + 5 * 60 * 1000;
+    return _cacheDB;
+  } catch { return { vermelho: [], amarelo: [], verde: [] }; }
+}
+
 // ── Palavras-chave estáticas (fallback sem IA) ───────────────────────────────
 const RISK_RULES = {
   vermelho: [
@@ -95,12 +113,26 @@ const CATEGORIAS = {
   'Financeiro': ['depósito judicial', 'precatório', 'rpv', 'honorários', 'custas', 'devolução de valores'],
 };
 
-// ── Análise básica por palavras-chave ────────────────────────────────────────
+// ── Análise básica por palavras-chave (estáticas + banco) ────────────────────
 function analyzeRisk(texto) {
   const t = (texto || '').toLowerCase();
   for (const p of RISK_RULES.vermelho) { if (t.includes(p)) return 'vermelho'; }
   for (const p of RISK_RULES.amarelo)  { if (t.includes(p)) return 'amarelo';  }
   for (const p of RISK_RULES.verde)    { if (t.includes(p)) return 'verde';    }
+  return 'azul';
+}
+
+async function analyzeRiskComDB(texto) {
+  const t = (texto || '').toLowerCase();
+  // Estáticas primeiro
+  const base = analyzeRisk(texto);
+  if (base === 'vermelho') return 'vermelho';
+  // Carrega do banco
+  const db = await getKeywordsDB();
+  for (const p of (db.vermelho || [])) { if (t.includes(p)) return 'vermelho'; }
+  if (base !== 'azul') return base;
+  for (const p of (db.amarelo || [])) { if (t.includes(p)) return 'amarelo'; }
+  for (const p of (db.verde   || [])) { if (t.includes(p)) return 'verde';   }
   return 'azul';
 }
 
@@ -174,4 +206,4 @@ function getRiskLabel(risco) {
   }[risco] || '🔵 INFORMATIVO';
 }
 
-module.exports = { analyzeRisk, analyzeRiskIA, analyzeProcessoRisco, getRiskLabel, getCategoria };
+module.exports = { analyzeRisk, analyzeRiskComDB, analyzeRiskIA, analyzeProcessoRisco, getRiskLabel, getCategoria };

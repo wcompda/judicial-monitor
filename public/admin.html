@@ -1,0 +1,759 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JudicialMonitor</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  body { background:#f3f4f6; min-height:100vh; }
+
+  /* LOGIN */
+  .login-page { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; background:#1e40af; padding:20px; }
+  .login-box { background:white; border-radius:20px; padding:32px 24px; width:100%; max-width:380px; box-shadow:0 20px 60px rgba(0,0,0,.3); }
+  .login-logo { text-align:center; margin-bottom:24px; }
+  .login-logo .icon { font-size:48px; }
+  .login-logo h1 { font-size:22px; font-weight:800; color:#1e40af; margin-top:8px; }
+  .login-logo p { color:#6b7280; font-size:13px; margin-top:4px; }
+  .login-input { width:100%; padding:14px; border:2px solid #e5e7eb; border-radius:10px; font-size:16px; margin-bottom:12px; outline:none; }
+  .login-input:focus { border-color:#1e40af; }
+  .login-btn { width:100%; padding:14px; background:#1e40af; color:white; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; }
+  .login-btn:hover { background:#1d3a9e; }
+  .login-error { color:#dc2626; font-size:13px; text-align:center; margin-bottom:10px; display:none; }
+
+  /* APP */
+  .app { display:none; }
+  .header { background:#1e40af; padding:16px 20px; display:flex; align-items:center; gap:12px; }
+  .header h1 { color:white; font-size:18px; font-weight:700; flex:1; }
+  .logout-btn { background:rgba(255,255,255,.2); border:none; color:white; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; }
+  .nav { background:white; display:flex; border-top:1px solid #e5e7eb; position:fixed; bottom:0; left:0; right:0; z-index:100; box-shadow:0 -2px 8px rgba(0,0,0,.08); }
+  .nav button { flex:1; padding:12px 4px; border:none; background:none; cursor:pointer; font-size:11px; color:#9ca3af; display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .nav button.active { color:#1e40af; }
+  .nav button span { font-size:22px; }
+  .page { display:none; padding:16px; padding-bottom:80px; }
+  .page.active { display:block; }
+  .hero { background:#1e40af; margin:-16px -16px 16px; padding:20px; }
+  .hero h2 { color:white; font-size:20px; font-weight:700; }
+  .hero p { color:rgba(255,255,255,.75); font-size:12px; margin-top:4px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+  .stat-card { border-radius:12px; padding:16px; text-align:center; border:1px solid; cursor:pointer; transition:transform .1s, box-shadow .1s; }
+  .stat-card:hover { transform:scale(1.03); box-shadow:0 4px 16px rgba(0,0,0,.12); }
+  .stat-card:active { transform:scale(.97); }
+  .stat-card .emoji { font-size:28px; }
+  .stat-card .num { font-size:32px; font-weight:800; margin:4px 0; }
+  .stat-card .lbl { font-size:10px; font-weight:700; text-transform:uppercase; }
+  .stat-card .tap-hint { font-size:9px; color:#9ca3af; margin-top:4px; }
+  .total-card { background:white; border-radius:12px; padding:16px; text-align:center; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .total-card .t-lbl { font-size:14px; color:#6b7280; }
+  .total-card .t-num { font-size:42px; font-weight:800; color:#1e40af; }
+  .btn-primary { background:#1e40af; color:white; border:none; width:100%; padding:14px; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; margin-bottom:8px; }
+  .btn-primary:disabled { background:#93c5fd; }
+  .btn-danger { background:#dc2626; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; }
+  .auto-txt { text-align:center; color:#9ca3af; font-size:11px; }
+  .search { background:white; border:none; border-radius:10px; padding:12px 14px; width:100%; font-size:14px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .filters { display:flex; gap:6px; margin-bottom:10px; overflow-x:auto; padding-bottom:4px; }
+  .filter-btn { padding:6px 12px; border-radius:20px; border:1px solid #e5e7eb; background:white; cursor:pointer; font-size:11px; font-weight:600; white-space:nowrap; }
+  .filter-btn.active { background:#1e40af; color:white; border-color:#1e40af; }
+  .processo-card { background:white; border-radius:12px; padding:16px; margin-bottom:10px; box-shadow:0 1px 4px rgba(0,0,0,.06); border-left:5px solid; cursor:pointer; transition:transform .1s; }
+  .processo-card:hover { transform:scale(1.01); box-shadow:0 4px 12px rgba(0,0,0,.1); }
+  .processo-card:active { transform:scale(.98); }
+  .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .card-tribunal { font-size:13px; font-weight:700; color:#374151; }
+  .card-numero { font-size:12px; font-family:monospace; color:#1e40af; font-weight:600; margin-bottom:4px; }
+  .card-classe { font-size:12px; color:#374151; margin-bottom:4px; }
+  .card-assunto { font-size:11px; color:#6b7280; margin-bottom:8px; }
+  .card-footer { display:flex; justify-content:space-between; align-items:center; }
+  .badge { padding:3px 10px; border-radius:20px; border:1px solid; font-size:10px; font-weight:700; }
+  .card-data { font-size:11px; color:#9ca3af; }
+  .nova-badge { background:#ef4444; color:white; border-radius:10px; padding:2px 7px; font-size:10px; font-weight:700; margin-left:6px; }
+  .back-btn { background:none; border:none; color:#1e40af; font-size:15px; cursor:pointer; padding:8px 0; margin-bottom:12px; display:flex; align-items:center; gap:6px; }
+  .risco-banner { display:flex; align-items:center; gap:12px; padding:16px; border-bottom:1px solid; margin:-16px -16px 16px; }
+  .risco-banner .big-emoji { font-size:36px; }
+  .risco-label { font-size:15px; font-weight:800; text-transform:uppercase; }
+  .risco-desc { font-size:12px; color:#6b7280; margin-top:2px; }
+  .section { background:white; border-radius:12px; padding:16px; margin-bottom:10px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .section-title { font-size:12px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:.5px; margin-bottom:12px; }
+  .info-row { display:flex; padding:8px 0; border-bottom:1px solid #f3f4f6; align-items:center; }
+  .info-label { width:130px; font-size:13px; color:#6b7280; font-weight:500; }
+  .info-value { flex:1; font-size:13px; color:#1f2937; font-weight:500; }
+  .info-mono { font-family:monospace; color:#1e40af; }
+  .mov-item { padding:10px; margin-bottom:8px; background:#f9fafb; border-radius:6px; border-left:3px solid; }
+  .mov-header { display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+  .mov-data { font-size:11px; color:#6b7280; flex:1; }
+  .mov-desc { font-size:13px; color:#374151; line-height:1.4; }
+  .empty { text-align:center; padding:60px 20px; }
+  .empty .empty-emoji { font-size:48px; margin-bottom:12px; }
+  .empty p { color:#6b7280; font-size:14px; line-height:1.6; }
+  .error-banner { background:#fef2f2; border:1px solid #fca5a5; border-radius:8px; padding:12px; margin-bottom:12px; color:#dc2626; font-size:13px; }
+  .btn-tribunal { display:flex; align-items:center; justify-content:center; gap:8px; background:#1e40af; color:white; border:none; width:100%; padding:14px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; margin-bottom:10px; text-decoration:none; }
+  .config-card { background:white; border-radius:12px; padding:16px; margin-bottom:10px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .config-title { font-size:15px; font-weight:700; color:#1f2937; margin-bottom:12px; }
+  .pessoa-card { display:flex; align-items:center; padding:12px 0; border-bottom:1px solid #f3f4f6; }
+  .pessoa-info { flex:1; }
+  .pessoa-nome { font-size:14px; font-weight:700; color:#1f2937; }
+  .pessoa-cpf { font-size:12px; color:#6b7280; font-family:monospace; }
+  .pessoa-email { font-size:11px; color:#2563eb; }
+  .form-input { width:100%; padding:12px; border:1.5px solid #e5e7eb; border-radius:8px; font-size:14px; margin-bottom:8px; outline:none; }
+  .form-input:focus { border-color:#1e40af; }
+  .risco-row { display:flex; gap:10px; align-items:flex-start; margin-bottom:10px; }
+  .risco-row-emoji { font-size:22px; }
+  .risco-row-label { font-size:13px; font-weight:700; color:#1f2937; }
+  .risco-row-desc { font-size:12px; color:#6b7280; margin-top:2px; line-height:1.4; }
+  .loading { text-align:center; padding:40px; color:#6b7280; }
+</style>
+</head>
+<body>
+
+<!-- TELA DE LOGIN -->
+<div id="login-page" class="login-page">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">🏛️</div>
+      <h1>JudicialMonitor</h1>
+      <p>Monitoramento de processos judiciais</p>
+    </div>
+    <div id="login-error" class="login-error">Senha incorreta. Tente novamente.</div>
+    <input class="login-input" type="password" id="login-senha" placeholder="Digite sua senha..." onkeydown="if(event.key==='Enter')fazerLogin()">
+    <button class="login-btn" onclick="fazerLogin()">🔐 Entrar</button>
+  </div>
+</div>
+
+<!-- APP PRINCIPAL -->
+<div id="app" class="app">
+  <div class="header">
+    <span style="font-size:24px">🏛️</span>
+    <h1>JudicialMonitor</h1>
+    <button class="logout-btn" onclick="fazerLogout()">Sair</button>
+  </div>
+
+  <div id="page-dashboard" class="page active">
+    <div class="hero">
+      <h2>Olá, Wenrry 👋</h2>
+      <p id="ultima-verif">Última verificação: carregando...</p>
+    </div>
+    <div class="grid">
+      <div class="stat-card" style="background:#fef2f2;border-color:#fca5a5" onclick="irParaFiltro('vermelho')">
+        <div class="emoji">🔴</div><div class="num" style="color:#dc2626" id="s-vermelho">0</div>
+        <div class="lbl" style="color:#dc2626">Urgente</div><div class="tap-hint">toque para ver</div>
+      </div>
+      <div class="stat-card" style="background:#fffbeb;border-color:#fcd34d" onclick="irParaFiltro('amarelo')">
+        <div class="emoji">🟡</div><div class="num" style="color:#d97706" id="s-amarelo">0</div>
+        <div class="lbl" style="color:#d97706">Atenção</div><div class="tap-hint">toque para ver</div>
+      </div>
+      <div class="stat-card" style="background:#f0fdf4;border-color:#86efac" onclick="irParaFiltro('verde')">
+        <div class="emoji">🟢</div><div class="num" style="color:#16a34a" id="s-verde">0</div>
+        <div class="lbl" style="color:#16a34a">Favorável</div><div class="tap-hint">toque para ver</div>
+      </div>
+      <div class="stat-card" style="background:#eff6ff;border-color:#93c5fd" onclick="irParaFiltro('azul')">
+        <div class="emoji">🔵</div><div class="num" style="color:#2563eb" id="s-azul">0</div>
+        <div class="lbl" style="color:#2563eb">Informativo</div><div class="tap-hint">toque para ver</div>
+      </div>
+    </div>
+    <div class="total-card">
+      <div class="t-lbl">Total de Processos</div>
+      <div class="t-num" id="s-total">0</div>
+    </div>
+    <div id="urgentes-section"></div>
+    <button class="btn-primary" id="btn-verify" onclick="verificarAgora()">🔍 Verificar Agora</button>
+    <p class="auto-txt">Verificação automática a cada 6 horas</p>
+  </div>
+
+  <div id="page-processos" class="page">
+    <input class="search" placeholder="🔍 Buscar por número, tribunal, assunto..." oninput="filtrar()" id="busca">
+    <div class="filters">
+      <button class="filter-btn active" id="fb-todos" onclick="setFiltro('todos',this)">📋 Todos</button>
+      <button class="filter-btn" id="fb-vermelho" onclick="setFiltro('vermelho',this)">🔴 Urgente</button>
+      <button class="filter-btn" id="fb-amarelo" onclick="setFiltro('amarelo',this)">🟡 Atenção</button>
+      <button class="filter-btn" id="fb-verde" onclick="setFiltro('verde',this)">🟢 Favorável</button>
+      <button class="filter-btn" id="fb-azul" onclick="setFiltro('azul',this)">🔵 Info</button>
+    </div>
+    <div id="error-msg" style="display:none" class="error-banner"></div>
+    <div id="lista-processos"></div>
+  </div>
+
+  <div id="page-detalhe" class="page">
+    <button class="back-btn" onclick="showPage('processos')">← Voltar</button>
+    <div id="detalhe-content"></div>
+  </div>
+
+  <div id="page-config" class="page">
+    <!-- Pessoas monitoradas -->
+    <div class="config-card">
+      <div class="config-title">👥 Pessoas Monitoradas</div>
+      <div id="lista-pessoas"></div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #f3f4f6">
+        <div style="font-size:13px;font-weight:700;color:#1f2937;margin-bottom:10px">➕ Adicionar Pessoa</div>
+        <input class="form-input" id="p-nome" placeholder="Nome completo (ex: JOAO DA SILVA)">
+        <input class="form-input" id="p-cpf" placeholder="CPF (somente números)">
+        <input class="form-input" id="p-email" placeholder="Email para notificações (opcional)">
+        <button class="btn-primary" onclick="adicionarPessoa()">Adicionar</button>
+        <div id="pessoa-msg" style="font-size:13px;text-align:center;margin-top:6px;display:none"></div>
+      </div>
+    </div>
+
+    <!-- Segurança -->
+    <div class="config-card">
+      <div class="config-title">🔒 Segurança</div>
+      <div class="info-row"><div class="info-label">Sessão</div><div class="info-value" style="color:#16a34a">✅ Ativa (30 dias)</div></div>
+      <div class="info-row"><div class="info-label">Servidor</div><div class="info-value info-mono" style="font-size:11px" id="api-url"></div></div>
+      <button class="btn-primary" onclick="testarConexao()" style="margin-top:12px">🔌 Testar Conexão</button>
+      <button class="btn-primary" style="background:#dc2626;margin-top:8px" onclick="fazerLogout()">🚪 Sair do App</button>
+    </div>
+
+    <!-- Cores -->
+    <div class="config-card">
+      <div class="config-title">🚦 Sistema de Cores</div>
+      <div class="risco-row"><div class="risco-row-emoji">🔴</div><div><div class="risco-row-label">VERMELHO — Urgente</div><div class="risco-row-desc">Penhora, execução, bloqueio, condenação. Consulte seu advogado.</div></div></div>
+      <div class="risco-row"><div class="risco-row-emoji">🟡</div><div><div class="risco-row-label">AMARELO — Atenção</div><div class="risco-row-desc">Citação, intimação, audiência, prazo para recurso.</div></div></div>
+      <div class="risco-row"><div class="risco-row-emoji">🟢</div><div><div class="risco-row-label">VERDE — Favorável</div><div class="risco-row-desc">Arquivamento, decisão favorável, liberação de bloqueio.</div></div></div>
+      <div class="risco-row"><div class="risco-row-emoji">🔵</div><div><div class="risco-row-label">AZUL — Informativo</div><div class="risco-row-desc">Movimentações de rotina sem impacto imediato.</div></div></div>
+    </div>
+  </div>
+
+  <div id="page-palavras" class="page">
+    <div class="hero">
+      <h2>🔑 Palavras-chave</h2>
+      <p>Adicione termos personalizados sem alterar o código</p>
+    </div>
+    <div class="config-card">
+      <div class="config-title">➕ Nova Palavra-chave</div>
+      <input class="form-input" id="pk-palavra" placeholder="Ex: bloqueio de veículo">
+      <select class="form-input" id="pk-risco">
+        <option value="vermelho">🔴 Vermelho — Urgente</option>
+        <option value="amarelo" selected>🟡 Amarelo — Atenção</option>
+        <option value="verde">🟢 Verde — Favorável</option>
+      </select>
+      <button class="btn-primary" onclick="adicionarPalavra()">Adicionar</button>
+      <div id="pk-msg" style="font-size:13px;text-align:center;margin-top:6px;display:none"></div>
+    </div>
+    <div class="config-card">
+      <div class="config-title">📋 Palavras Cadastradas</div>
+      <div id="lista-palavras"><div class="loading">Carregando...</div></div>
+    </div>
+  </div>
+
+  <div id="page-importar" class="page">
+    <div class="hero">
+      <h2>📥 Importar por Foto</h2>
+      <p>Arraste os prints das telas do processo e a IA cadastra automaticamente</p>
+    </div>
+    <div id="drop-zone" style="border:3px dashed #93c5fd;border-radius:14px;padding:32px 16px;text-align:center;background:white;cursor:pointer;margin-bottom:14px">
+      <div style="font-size:40px">📸</div>
+      <p style="color:#1e40af;font-weight:700;margin-top:8px">Arraste as imagens aqui</p>
+      <p style="color:#9ca3af;font-size:12px;margin-top:4px">ou clique para selecionar (JPG, PNG)</p>
+      <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" multiple style="display:none">
+    </div>
+    <div id="fila-importacao"></div>
+  </div>
+
+  <nav class="nav">
+    <button class="active" onclick="showPage('dashboard')" id="nav-dashboard"><span>📊</span>Dashboard</button>
+    <button onclick="showPage('processos')" id="nav-processos"><span>📋</span>Processos</button>
+    <button onclick="showPage('importar')" id="nav-importar"><span>📥</span>Importar</button>
+    <button onclick="showPage('palavras')" id="nav-palavras"><span>🔑</span>Palavras</button>
+    <button onclick="showPage('config')" id="nav-config"><span>⚙️</span>Config</button>
+  </nav>
+</div>
+
+<script>
+const API = 'https://judicial-monitor-production.up.railway.app';
+document.getElementById('api-url').textContent = API;
+
+const RISCO = {
+  vermelho: { color:'#dc2626', bg:'#fef2f2', border:'#fca5a5', emoji:'🔴', label:'ATENÇÃO URGENTE' },
+  amarelo:  { color:'#d97706', bg:'#fffbeb', border:'#fcd34d', emoji:'🟡', label:'ATENÇÃO' },
+  verde:    { color:'#16a34a', bg:'#f0fdf4', border:'#86efac', emoji:'🟢', label:'FAVORÁVEL' },
+  azul:     { color:'#2563eb', bg:'#eff6ff', border:'#93c5fd', emoji:'🔵', label:'INFORMATIVO' }
+};
+
+// Para TJMG: mostra os dois links (eproc e PJe) pois varia por vara
+const TRIBUNAL_URL = {
+  TJMG: n => 'https://pje-consulta-publica.tjmg.jus.br/',
+  TJMG_EPROC: n => 'https://eproc-consulta-publica-1g.tjmg.jus.br/eproc/externo_controlador.php?acao=processo_consulta_publica',
+  TJSP: n => 'https://esaj.tjsp.jus.br/cpopg/search.do?cbPesquisa=NUMPROC&dadosConsulta.valorConsultaNuUnificado=' + n,
+  TJRS: n => 'https://www.tjrs.jus.br/site_php/consulta/consulta_processo.php?num_processo_mask=' + n + '&acao=consultar',
+  TJSC: n => 'https://esaj.tjsc.jus.br/cpopg/search.do?cbPesquisa=NUMPROC&dadosConsulta.valorConsultaNuUnificado=' + n,
+  TJBA: n => 'https://esaj.tjba.jus.br/cpopg/search.do?cbPesquisa=NUMPROC&dadosConsulta.valorConsultaNuUnificado=' + n,
+  TJCE: n => 'https://esaj.tjce.jus.br/cpopg/search.do?cbPesquisa=NUMPROC&dadosConsulta.valorConsultaNuUnificado=' + n,
+  TJMS: n => 'https://esaj.tjms.jus.br/cpopg5/search.do?cbPesquisa=NUMPROC&dadosConsulta.valorConsultaNuUnificado=' + n,
+  TRF1: n => 'https://processual.trf1.jus.br/consultaProcessual/processo.php?proc=' + n + '&secao=TRF',
+  STJ:  n => 'https://ww2.stj.jus.br/processo/pesquisa/?tipoPesquisa=tipoPesquisaNumeroRegistro&termo=' + n
+};
+
+function getBotoesTribunal(t, n) {
+  const nLimpo = encodeURIComponent(n);
+  let html = '';
+
+  if (t === 'TJMG') {
+    html += '<a href="https://pje-consulta-publica.tjmg.jus.br/" target="_blank" class="btn-tribunal">🔗 PJe TJMG</a>';
+    html += '<a href="https://eproc-consulta-publica-1g.tjmg.jus.br/eproc/externo_controlador.php?acao=processo_consulta_publica" target="_blank" class="btn-tribunal" style="margin-top:6px">🔗 eProc TJMG</a>';
+  } else if (t === 'TJSP') {
+    html += '<a href="https://eproc-consulta.tjsp.jus.br/consulta_1g/externo_controlador.php?acao=tjsp@consulta_unificada_publica/consultar" target="_blank" class="btn-tribunal">🔗 eProc TJSP</a>';
+    html += '<a href="https://esaj.tjsp.jus.br/cpopg/search.do?cbPesquisa=NUMPROC&dadosConsulta.valorConsultaNuUnificado=' + n + '" target="_blank" class="btn-tribunal" style="margin-top:6px">🔗 eSAJ TJSP</a>';
+  } else {
+    const fn = TRIBUNAL_URL[t];
+    if (fn) html += '<a href="' + fn(n) + '" target="_blank" class="btn-tribunal">🔗 Abrir no Tribunal (' + t + ')</a>';
+  }
+
+  // Sempre adiciona JusBrasil e Escavador
+  html += '<a href="https://www.jusbrasil.com.br/consulta-processual/busca?q=' + nLimpo + '" target="_blank" class="btn-tribunal" style="background:#e65c00;margin-top:6px">🔍 Buscar no JusBrasil</a>';
+  html += '<a href="https://www.escavador.com/processos?q=' + nLimpo + '" target="_blank" class="btn-tribunal" style="background:#6d28d9;margin-top:6px">🔍 Buscar no Escavador</a>';
+
+  return html;
+}
+
+// ── AUTH ──
+let authToken = localStorage.getItem('jm_token') || '';
+
+function apiHeaders() {
+  return { 'Content-Type': 'application/json', 'x-token': authToken };
+}
+
+async function fazerLogin() {
+  const senha = document.getElementById('login-senha').value;
+  if (!senha) return;
+  try {
+    const r = await fetch(API + '/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senha })
+    });
+    const d = await r.json();
+    if (d.success) {
+      authToken = d.token;
+      localStorage.setItem('jm_token', authToken);
+      mostrarApp();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  } catch(e) {
+    document.getElementById('login-error').textContent = 'Erro de conexão. Tente novamente.';
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+function fazerLogout() {
+  fetch(API + '/api/logout', { method:'POST', headers: apiHeaders() }).catch(()=>{});
+  authToken = '';
+  localStorage.removeItem('jm_token');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('login-senha').value = '';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+function mostrarApp() {
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadStats();
+  loadPessoas();
+}
+
+// Verifica token salvo ao abrir
+async function init() {
+  if (!authToken) return;
+  try {
+    const r = await fetch(API + '/api/stats', { headers: apiHeaders() });
+    if (r.status === 401) { authToken = ''; localStorage.removeItem('jm_token'); return; }
+    mostrarApp();
+  } catch(e) {}
+}
+
+// ── NAVEGAÇÃO ──
+let processos = [];
+let filtroAtivo = 'todos';
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + (name === 'detalhe' ? 'processos' : name)).classList.add('active');
+  if (name === 'dashboard') loadStats();
+  if (name === 'processos') loadProcessos();
+  if (name === 'config') loadPessoas();
+  if (name === 'palavras') loadPalavras();
+}
+
+function irParaFiltro(risco) {
+  filtroAtivo = risco;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('fb-' + risco).classList.add('active');
+  showPage('processos');
+}
+
+// ── STATS ──
+async function loadStats() {
+  try {
+    const r = await fetch(API + '/api/stats', { headers: apiHeaders() });
+    if (r.status === 401) { fazerLogout(); return; }
+    const { data } = await r.json();
+    document.getElementById('s-vermelho').textContent = data.vermelhos;
+    document.getElementById('s-amarelo').textContent = data.amarelos;
+    document.getElementById('s-verde').textContent = data.verdes;
+    document.getElementById('s-azul').textContent = data.azuis;
+    document.getElementById('s-total').textContent = data.total;
+    const d = new Date(data.ultimaVerif);
+    document.getElementById('ultima-verif').textContent = 'Ultima verificacao: ' + (d.getFullYear() > 1970 ? d.toLocaleString('pt-BR') : 'Nunca');
+    const pr = await fetch(API + '/api/processos', { headers: apiHeaders() });
+    const pd = await pr.json();
+    processos = pd.data || [];
+    const urgentes = processos.filter(p => p.risco === 'vermelho' || p.risco === 'amarelo').slice(0,5);
+    const sec = document.getElementById('urgentes-section');
+    if (urgentes.length > 0) {
+      sec.innerHTML = '<div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:10px">Requer Atencao</div>' +
+        urgentes.map(p => {
+          const c = RISCO[p.risco];
+          return '<div style="border-left:4px solid '+c.color+';padding:12px;border-radius:8px;background:'+c.bg+';margin-bottom:8px;cursor:pointer" onclick="abrirDetalhe(\''+p.id+'\')">' +
+            '<div style="font-size:11px;font-weight:700;color:'+c.color+'">'+p.tribunal+' '+c.emoji+'</div>' +
+            '<div style="font-size:13px;font-weight:600;color:#1e40af;font-family:monospace;margin-top:2px">'+p.numero+'</div>' +
+            '<div style="font-size:12px;color:#374151;margin-top:2px">'+(p.classe||p.assunto||'---')+'</div></div>';
+        }).join('');
+    } else { sec.innerHTML = ''; }
+  } catch(e) { console.error(e); }
+}
+
+// ── PROCESSOS ──
+async function loadProcessos() {
+  try {
+    if (processos.length === 0) {
+      const r = await fetch(API + '/api/processos', { headers: apiHeaders() });
+      const d = await r.json();
+      processos = d.data || [];
+    }
+    renderProcessos();
+    document.getElementById('error-msg').style.display = 'none';
+  } catch(e) {
+    document.getElementById('error-msg').style.display = 'block';
+    document.getElementById('error-msg').textContent = 'Nao foi possivel conectar ao servidor.';
+  }
+}
+
+function renderProcessos() {
+  const busca = document.getElementById('busca').value.toLowerCase();
+  const lista = processos.filter(p => {
+    const matchFiltro = filtroAtivo === 'todos' || p.risco === filtroAtivo;
+    const matchBusca = !busca || (p.numero+p.tribunal+(p.classe||'')+(p.assunto||'')).toLowerCase().includes(busca);
+    return matchFiltro && matchBusca;
+  });
+  const el = document.getElementById('lista-processos');
+  if (lista.length === 0) {
+    el.innerHTML = '<div class="empty"><div class="empty-emoji">📭</div><p>Nenhum processo encontrado.</p></div>';
+    return;
+  }
+  el.innerHTML = lista.map(p => {
+    const c = RISCO[p.risco] || RISCO.azul;
+    const data = p.ultima_movimentacao ? 'Ult: ' + new Date(p.ultima_movimentacao).toLocaleDateString('pt-BR') : '';
+    const nova = p.movs_novas > 0 ? '<span class="nova-badge">'+p.movs_novas+' nova'+(p.movs_novas>1?'s':'')+'</span>' : '';
+    return '<div class="processo-card" style="border-left-color:'+c.color+'" onclick="abrirDetalhe(\''+p.id+'\')">' +
+      '<div class="card-header"><div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:'+c.color+'"></div><span class="card-tribunal">'+p.tribunal+'</span>'+nova+'</div><span style="font-size:20px">'+c.emoji+'</span></div>' +
+      '<div class="card-numero">'+p.numero+'</div>' +
+      (p.classe ? '<div class="card-classe">'+p.classe+'</div>' : '') +
+      (p.assunto ? '<div class="card-assunto">'+p.assunto+'</div>' : '') +
+      '<div class="card-footer"><span class="badge" style="color:'+c.color+';background:'+c.bg+';border-color:'+c.border+'">'+c.emoji+' '+c.label+'</span><span class="card-data">'+data+'</span></div>' +
+      '</div>';
+  }).join('');
+}
+
+function setFiltro(f, btn) {
+  filtroAtivo = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderProcessos();
+}
+
+function filtrar() { renderProcessos(); }
+
+async function abrirDetalhe(id) {
+  showPage('detalhe');
+  document.getElementById('detalhe-content').innerHTML = '<div class="loading">Carregando...</div>';
+  try {
+    const r = await fetch(API + '/api/processos/' + encodeURIComponent(id), { headers: apiHeaders() });
+    const { data: p } = await r.json();
+    await fetch(API + '/api/processos/' + encodeURIComponent(id) + '/lido', { method:'POST', headers: apiHeaders() });
+    const c = RISCO[p.risco] || RISCO.azul;
+    const partes = Array.isArray(p.partes) ? p.partes : [];
+    const movs = (p.movimentacoes || []);
+    document.getElementById('detalhe-content').innerHTML =
+      '<div class="risco-banner" style="background:'+c.bg+';border-bottom-color:'+c.border+'">' +
+        '<span class="big-emoji">'+c.emoji+'</span>' +
+        '<div><div class="risco-label" style="color:'+c.color+'">'+c.label+'</div><div class="risco-desc">Tribunal: '+p.tribunal+'</div></div>' +
+      '</div>' +
+      getBotoesTribunal(p.tribunal, p.numero) +
+      '<div class="section"><div class="section-title">Identificacao</div>' +
+        '<div class="info-row"><div class="info-label">Numero</div><div class="info-value info-mono">'+p.numero+'</div></div>' +
+        '<div class="info-row"><div class="info-label">Tribunal</div><div class="info-value">'+p.tribunal+'</div></div>' +
+        '<div class="info-row"><div class="info-label">Classe</div><div class="info-value">'+(p.classe||'---')+'</div></div>' +
+        '<div class="info-row"><div class="info-label">Distribuido</div><div class="info-value">'+(p.data_distribuicao ? new Date(p.data_distribuicao).toLocaleDateString('pt-BR') : '---')+'</div></div>' +
+        (p.valor_causa > 0 ? '<div class="info-row"><div class="info-label">Valor da Causa</div><div class="info-value">R$ '+Number(p.valor_causa).toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>' : '') +
+      '</div>' +
+      (p.assunto ? '<div class="section"><div class="section-title">Assunto</div><p style="font-size:14px;color:#374151">'+p.assunto+'</p></div>' : '') +
+      (partes.length > 0 ? '<div class="section"><div class="section-title">Partes</div>'+partes.map(pt=>'<div class="info-row"><div class="info-label" style="color:#9ca3af;font-size:11px">'+(pt.polo||'PARTE').toUpperCase()+'</div><div class="info-value">'+(pt.nome||'---')+'</div></div>').join('')+'</div>' : '') +
+      '<div class="section"><div class="section-title">Movimentacoes ('+movs.length+')</div>' +
+        (movs.length === 0 ? '<p style="color:#9ca3af;text-align:center;padding:20px">Nenhuma movimentacao</p>' :
+          movs.map(m => {
+            const mc = RISCO[m.risco] || RISCO.azul;
+            return '<div class="mov-item" style="border-left-color:'+mc.color+'">' +
+              '<div class="mov-header"><span>'+mc.emoji+'</span><span class="mov-data">'+(m.data ? new Date(m.data).toLocaleString('pt-BR') : '---')+'</span>'+(!m.notificado ? '<span style="background:#ef4444;color:white;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">NOVA</span>' : '')+'</div>' +
+              '<div class="mov-desc">'+m.descricao+'</div></div>';
+          }).join('')) +
+      '</div>';
+  } catch(e) {
+    document.getElementById('detalhe-content').innerHTML = '<p style="color:#dc2626;text-align:center;padding:40px">Erro ao carregar processo</p>';
+  }
+}
+
+// ── VERIFICAR ──
+async function verificarAgora() {
+  const btn = document.getElementById('btn-verify');
+  btn.disabled = true;
+  btn.textContent = 'Verificando...';
+  try {
+    await fetch(API + '/api/verificar', { method:'POST', headers: apiHeaders() });
+    setTimeout(async () => {
+      processos = [];
+      await loadStats();
+      btn.disabled = false;
+      btn.textContent = 'Verificar Agora';
+    }, 4000);
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Verificar Agora';
+  }
+}
+
+// ── PESSOAS ──
+async function loadPessoas() {
+  try {
+    const r = await fetch(API + '/api/pessoas', { headers: apiHeaders() });
+    const { data } = await r.json();
+    const el = document.getElementById('lista-pessoas');
+    if (!data || data.length === 0) {
+      el.innerHTML = '<p style="color:#9ca3af;text-align:center;padding:16px">Nenhuma pessoa cadastrada</p>';
+      return;
+    }
+    el.innerHTML = data.map(p => {
+      const cpfFmt = p.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+      return '<div class="pessoa-card">' +
+        '<div class="pessoa-info">' +
+          '<div class="pessoa-nome">'+p.nome+'</div>' +
+          '<div class="pessoa-cpf">CPF: '+cpfFmt+'</div>' +
+          (p.email ? '<div class="pessoa-email">'+p.email+'</div>' : '') +
+        '</div>' +
+        (data.length > 1 ? '<button class="btn-danger" onclick="removerPessoa('+p.id+')">Remover</button>' : '<span style="font-size:11px;color:#9ca3af">Principal</span>') +
+      '</div>';
+    }).join('');
+  } catch(e) {}
+}
+
+async function adicionarPessoa() {
+  const nome = document.getElementById('p-nome').value.trim();
+  const cpf = document.getElementById('p-cpf').value.replace(/\D/g,'');
+  const email = document.getElementById('p-email').value.trim();
+  const msg = document.getElementById('pessoa-msg');
+  if (!nome || cpf.length < 11) {
+    msg.style.display = 'block'; msg.style.color = '#dc2626';
+    msg.textContent = 'Preencha nome e CPF corretamente.'; return;
+  }
+  try {
+    const r = await fetch(API + '/api/pessoas', {
+      method: 'POST',
+      headers: apiHeaders(),
+      body: JSON.stringify({ nome, cpf, email })
+    });
+    const d = await r.json();
+    if (d.success) {
+      msg.style.display = 'block'; msg.style.color = '#16a34a';
+      msg.textContent = 'Pessoa adicionada com sucesso!';
+      document.getElementById('p-nome').value = '';
+      document.getElementById('p-cpf').value = '';
+      document.getElementById('p-email').value = '';
+      loadPessoas();
+    } else {
+      msg.style.display = 'block'; msg.style.color = '#dc2626';
+      msg.textContent = d.message || 'Erro ao adicionar.';
+    }
+  } catch(e) {
+    msg.style.display = 'block'; msg.style.color = '#dc2626';
+    msg.textContent = 'Erro de conexão.';
+  }
+}
+
+async function removerPessoa(id) {
+  if (!confirm('Remover esta pessoa do monitoramento?')) return;
+  await fetch(API + '/api/pessoas/' + id, { method:'DELETE', headers: apiHeaders() });
+  loadPessoas();
+}
+
+async function testarConexao() {
+  try {
+    const r = await fetch(API + '/api/health');
+    const d = await r.json();
+    alert('Conexao OK!\nServidor: ' + API);
+  } catch(e) {
+    alert('Falha na conexao!\n' + API);
+  }
+}
+
+// ── PALAVRAS-CHAVE ──
+async function loadPalavras() {
+  const el = document.getElementById('lista-palavras');
+  try {
+    const r = await fetch(API + '/api/palavras-chave', { headers: apiHeaders() });
+    const d = await r.json();
+    if (!d.data || !d.data.length) { el.innerHTML = '<p style="color:#9ca3af;font-size:13px;text-align:center;padding:16px">Nenhuma palavra cadastrada ainda.</p>'; return; }
+    const cores = { vermelho:'#dc2626', amarelo:'#d97706', verde:'#16a34a', azul:'#2563eb' };
+    const emoji = { vermelho:'🔴', amarelo:'🟡', verde:'🟢', azul:'🔵' };
+    el.innerHTML = d.data.map(p => `
+      <div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6;gap:10px">
+        <span style="font-size:14px">${emoji[p.risco]||'🔵'}</span>
+        <span style="flex:1;font-size:13px;color:#1f2937">${p.palavra}</span>
+        <span style="font-size:11px;font-weight:700;color:${cores[p.risco]||'#2563eb'}">${p.risco.toUpperCase()}</span>
+        <button class="btn-danger" onclick="removerPalavra(${p.id})">✕</button>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<p style="color:#dc2626;font-size:13px">Erro ao carregar.</p>'; }
+}
+
+async function adicionarPalavra() {
+  const palavra = document.getElementById('pk-palavra').value.trim();
+  const risco = document.getElementById('pk-risco').value;
+  const msg = document.getElementById('pk-msg');
+  if (!palavra) { msg.style.display='block'; msg.style.color='#dc2626'; msg.textContent='Digite a palavra-chave.'; return; }
+  try {
+    const r = await fetch(API + '/api/palavras-chave', { method:'POST', headers: apiHeaders(), body: JSON.stringify({ palavra, risco }) });
+    const d = await r.json();
+    if (d.success) {
+      msg.style.display='block'; msg.style.color='#16a34a'; msg.textContent='Adicionada com sucesso!';
+      document.getElementById('pk-palavra').value = '';
+      loadPalavras();
+    } else { msg.style.display='block'; msg.style.color='#dc2626'; msg.textContent = d.message || 'Erro.'; }
+  } catch(e) { msg.style.display='block'; msg.style.color='#dc2626'; msg.textContent='Erro de conexão.'; }
+}
+
+async function removerPalavra(id) {
+  if (!confirm('Remover esta palavra-chave?')) return;
+  await fetch(API + '/api/palavras-chave/' + id, { method:'DELETE', headers: apiHeaders() });
+  loadPalavras();
+}
+
+// ── IMPORTAR POR FOTO ──
+let filaImportacao = []; // { id, nome, dataUrl, status, dados }
+
+function initImportar() {
+  const dz = document.getElementById('drop-zone');
+  const fi = document.getElementById('file-input');
+  dz.onclick = () => fi.click();
+  fi.onchange = e => processarArquivos(e.target.files);
+  dz.ondragover = e => { e.preventDefault(); dz.style.background = '#eff6ff'; };
+  dz.ondragleave = () => { dz.style.background = 'white'; };
+  dz.ondrop = e => {
+    e.preventDefault();
+    dz.style.background = 'white';
+    processarArquivos(e.dataTransfer.files);
+  };
+}
+
+function processarArquivos(files) {
+  [...files].forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const id = Date.now() + '-' + Math.random().toString(36).slice(2);
+    const reader = new FileReader();
+    reader.onload = ev => {
+      filaImportacao.push({ id, nome: file.name, dataUrl: ev.target.result, mediaType: file.type, status: 'pendente', dados: null });
+      renderFila();
+      extrairItem(id);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderFila() {
+  const el = document.getElementById('fila-importacao');
+  if (!filaImportacao.length) { el.innerHTML = ''; return; }
+  el.innerHTML = filaImportacao.map(item => {
+    let corpo = '';
+    if (item.status === 'processando') {
+      corpo = '<p style="color:#9ca3af;font-size:13px;margin-top:8px">🔄 Lendo imagem com IA...</p>';
+    } else if (item.status === 'erro') {
+      corpo = '<p style="color:#dc2626;font-size:13px;margin-top:8px">❌ ' + (item.erro || 'Erro ao processar') + '</p>';
+    } else if (item.status === 'revisar') {
+      const d = item.dados;
+      corpo = '<div style="margin-top:10px">' +
+        '<input class="form-input" value="' + (d.numero||'') + '" oninput="atualizarCampo(\'' + item.id + '\',\'numero\',this.value)" placeholder="Número do processo">' +
+        '<input class="form-input" value="' + (d.tribunal||'') + '" oninput="atualizarCampo(\'' + item.id + '\',\'tribunal\',this.value)" placeholder="Tribunal (ex: TJMG)">' +
+        '<input class="form-input" value="' + (d.classe||'') + '" oninput="atualizarCampo(\'' + item.id + '\',\'classe\',this.value)" placeholder="Classe">' +
+        '<input class="form-input" value="' + (d.assunto||'') + '" oninput="atualizarCampo(\'' + item.id + '\',\'assunto\',this.value)" placeholder="Assunto">' +
+        '<button class="btn-primary" onclick="confirmarItem(\'' + item.id + '\')">✅ Confirmar e Cadastrar</button>' +
+        '<button class="btn-danger" style="width:100%" onclick="removerItemFila(\'' + item.id + '\')">Descartar</button>' +
+        '</div>';
+    } else if (item.status === 'cadastrado') {
+      corpo = '<p style="color:#16a34a;font-size:13px;margin-top:8px;font-weight:700">✅ Processo cadastrado com sucesso!</p>';
+    }
+    return '<div class="processo-card" style="border-left-color:#1e40af">' +
+      '<div style="display:flex;gap:10px;align-items:center">' +
+      '<img src="' + item.dataUrl + '" style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb">' +
+      '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#374151">' + item.nome + '</div></div>' +
+      '</div>' + corpo + '</div>';
+  }).join('');
+}
+
+async function extrairItem(id) {
+  const item = filaImportacao.find(i => i.id === id);
+  item.status = 'processando';
+  renderFila();
+  try {
+    const base64 = item.dataUrl.split(',')[1];
+    const r = await fetch(API + '/api/processos/extrair-imagem', {
+      method: 'POST', headers: apiHeaders(),
+      body: JSON.stringify({ imagem: base64, mediaType: item.mediaType })
+    });
+    const d = await r.json();
+    if (d.success) {
+      item.dados = d.data;
+      item.status = 'revisar';
+    } else {
+      item.status = 'erro';
+      item.erro = d.message;
+    }
+  } catch (e) {
+    item.status = 'erro';
+    item.erro = 'Erro de conexão';
+  }
+  renderFila();
+}
+
+function atualizarCampo(id, campo, valor) {
+  const item = filaImportacao.find(i => i.id === id);
+  item.dados[campo] = valor;
+}
+
+async function confirmarItem(id) {
+  const item = filaImportacao.find(i => i.id === id);
+  if (!item.dados.numero) { alert('Número do processo é obrigatório'); return; }
+  try {
+    const r = await fetch(API + '/api/processos/adicionar', {
+      method: 'POST', headers: apiHeaders(),
+      body: JSON.stringify(item.dados)
+    });
+    const d = await r.json();
+    if (d.success) {
+      item.status = 'cadastrado';
+      renderFila();
+    } else {
+      alert(d.message || 'Erro ao cadastrar processo');
+    }
+  } catch (e) {
+    alert('Erro de conexão ao cadastrar');
+  }
+}
+
+function removerItemFila(id) {
+  filaImportacao = filaImportacao.filter(i => i.id !== id);
+  renderFila();
+}
+
+// Inicia
+init();
+initImportar();
+</script>
+</body>
+</html>
