@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JudicialMonitor — Manual Completo v4.0</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; color: #1f2937; font-size: 14px; }
+
+  .cover {
+    background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+    color: white; text-align: center; padding: 60px 40px;
+    min-height: 200px;
+  }
+  .cover h1 { font-size: 32px; font-weight: 900; margin-bottom: 8px; }
+  .cover h2 { font-size: 18px; font-weight: 400; opacity: 0.85; margin-bottom: 20px; }
+  .cover .badges { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+  .badge { background: rgba(255,255,255,0.2); border-radius: 20px; padding: 6px 16px; font-size: 12px; font-weight: 700; }
+
+  .summary-box {
+    background: white; border-left: 5px solid #1e40af;
+    margin: 24px 32px; padding: 20px 24px; border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .summary-box h3 { color: #1e40af; margin-bottom: 12px; font-size: 16px; }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .summary-item { background: #f0f9ff; border-radius: 8px; padding: 12px; text-align: center; }
+  .summary-num { font-size: 28px; font-weight: 900; color: #1e40af; }
+  .summary-label { font-size: 11px; color: #6b7280; margin-top: 2px; }
+
+  .toc { background: white; margin: 0 32px 24px; padding: 20px 24px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .toc h3 { color: #374151; margin-bottom: 12px; font-size: 15px; }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px; }
+  .toc-item { padding: 5px 8px; border-radius: 4px; font-size: 13px; color: #4b5563; cursor: pointer; }
+  .toc-item:hover { background: #f3f4f6; }
+  .toc-item a { color: inherit; text-decoration: none; }
+
+  .section {
+    background: white; margin: 0 32px 16px; border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden;
+    page-break-inside: avoid;
+  }
+  .section-header {
+    display: flex; align-items: center; gap: 12px; padding: 16px 20px;
+    border-left: 5px solid currentColor;
+  }
+  .section-emoji { font-size: 24px; }
+  .section-title { font-size: 16px; font-weight: 800; }
+  .section-body { padding: 4px 20px 20px; }
+  .section-body ul { list-style: none; padding: 0; }
+  .section-body li {
+    padding: 6px 0; border-bottom: 1px solid #f3f4f6;
+    font-size: 13px; color: #374151; line-height: 1.5;
+    display: flex; gap: 8px;
+  }
+  .section-body li:last-child { border-bottom: none; }
+  .bullet { color: #9ca3af; flex-shrink: 0; margin-top: 2px; }
+
+  .highlight { background: #fef3c7; border-radius: 4px; padding: 2px 6px; font-weight: 600; }
+  .tag-red { background: #fee2e2; color: #dc2626; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 700; }
+  .tag-yellow { background: #fef3c7; color: #d97706; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 700; }
+  .tag-green { background: #dcfce7; color: #16a34a; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 700; }
+  .tag-blue { background: #dbeafe; color: #2563eb; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 700; }
+
+  .footer {
+    text-align: center; padding: 32px; color: #9ca3af; font-size: 12px;
+    border-top: 1px solid #e5e7eb; margin: 24px 32px 0;
+  }
+  .footer strong { color: #6b7280; }
+
+  @media print {
+    body { background: white; font-size: 12px; }
+    .cover { padding: 40px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .section { box-shadow: none; border: 1px solid #e5e7eb; margin: 0 0 12px; }
+    .summary-box, .toc { margin: 0 0 12px; box-shadow: none; border: 1px solid #e5e7eb; }
+    .footer { margin: 12px 0 0; }
+    @page { margin: 15mm 15mm; }
+  }
+  @media (max-width: 600px) {
+    .section, .summary-box, .toc { margin: 0 12px 12px; }
+    .cover h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Capa -->
+<div class="cover">
+  <div style="font-size:48px;margin-bottom:12px">⚖️</div>
+  <h1>JudicialMonitor</h1>
+  <h2>Manual Completo do Usuário</h2>
+  <div class="badges">
+    <span class="badge">📅 Versão 4.0 — Junho 2026</span>
+    <span class="badge">🤖 Motor IA Claude Haiku</span>
+    <span class="badge">📡 Radar Processual + IIP</span>
+    <span class="badge">🏛️ Todos os Tribunais do Brasil</span>
+  </div>
+</div>
+
+<!-- Resumo Executivo -->
+<div class="summary-box" style="margin-top:24px">
+  <h3>📋 Resumo do Sistema — JudicialMonitor v4.0</h3>
+  <p style="color:#4b5563;margin-bottom:16px;font-size:13px">
+    O JudicialMonitor é uma plataforma completa de monitoramento inteligente de processos judiciais brasileiros.
+    Combina dados oficiais do CNJ (DataJud) com Inteligência Artificial (Claude/Anthropic) para monitorar, analisar
+    e alertar sobre qualquer movimentação processual em tempo real. Desenvolvido pela <strong>WCOMTEC</strong> para
+    advogados, empresas e pessoas físicas que precisam acompanhar processos sem precisar acessar sites de tribunais.
+  </p>
+  <div class="summary-grid">
+    <div class="summary-item">
+      <div class="summary-num">230+</div>
+      <div class="summary-label">Termos jurídicos no dicionário (23 categorias)</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-num">23</div>
+      <div class="summary-label">Campos analisados pela IA por movimentação</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-num">6h</div>
+      <div class="summary-label">Intervalo de verificação automática</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-num">1.000</div>
+      <div class="summary-label">Pontuação máxima do IIP (Índice de Inteligência Processual)</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-num">100%</div>
+      <div class="summary-label">Nuvem — funciona sem o computador local</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-num">∞</div>
+      <div class="summary-label">Processos monitorados simultaneamente</div>
+    </div>
+  </div>
+</div>
+
+<!-- Índice -->
+<div class="toc">
+  <h3>📑 Índice</h3>
+  <div class="toc-grid">
+    <div class="toc-item"><a href="#boas-vindas">🏛️ 1. Bem-vindo ao JudicialMonitor</a></div>
+    <div class="toc-item"><a href="#acesso">🔐 2. Como Acessar o Sistema</a></div>
+    <div class="toc-item"><a href="#cadastro">📝 3. Cadastro de Novo Usuário</a></div>
+    <div class="toc-item"><a href="#painel">📊 4. Painel Principal (Dashboard)</a></div>
+    <div class="toc-item"><a href="#processos">📋 5. Lista de Processos</a></div>
+    <div class="toc-item"><a href="#detalhe">🔍 6. Detalhes de um Processo</a></div>
+    <div class="toc-item"><a href="#ia-analise">🤖 7. Análise Inteligente por IA</a></div>
+    <div class="toc-item"><a href="#radar">📡 8. Radar Processual + IIP</a></div>
+    <div class="toc-item"><a href="#chat-ia">💬 9. Chat IA Jurídico</a></div>
+    <div class="toc-item"><a href="#kpis">📈 10. KPIs e Indicadores</a></div>
+    <div class="toc-item"><a href="#dicionario">📚 11. Dicionário Jurídico Mestre (230+ termos)</a></div>
+    <div class="toc-item"><a href="#palavras-chave">🔑 12. Gerenciar Palavras-chave</a></div>
+    <div class="toc-item"><a href="#importar-foto">📸 13. Importar Processos por Foto</a></div>
+    <div class="toc-item"><a href="#tarefas">✅ 14. Tarefas Jurídicas</a></div>
+    <div class="toc-item"><a href="#webhooks">🔗 15. Webhooks e Integrações</a></div>
+    <div class="toc-item"><a href="#notificacoes">🔔 16. Notificações por E-mail</a></div>
+    <div class="toc-item"><a href="#notificacoes-ia">📩 17. Notificações com Resumo da IA</a></div>
+    <div class="toc-item"><a href="#usuarios">👤 18. Gerenciar Usuários (Admin)</a></div>
+    <div class="toc-item"><a href="#pessoas">👥 19. Monitorar Pessoas por CPF</a></div>
+    <div class="toc-item"><a href="#numero">🔢 20. Adicionar Processo por Número</a></div>
+    <div class="toc-item"><a href="#pdf">📄 21. Imprimir / Exportar PDF</a></div>
+    <div class="toc-item"><a href="#seguranca">🛡️ 22. Segurança e Privacidade</a></div>
+    <div class="toc-item"><a href="#dicas">💡 23. Dicas Importantes</a></div>
+    <div class="toc-item"><a href="#infraestrutura">☁️ 24. Infraestrutura e Backup</a></div>
+  </div>
+</div>
+
+<!-- Seção 1 -->
+<div class="section" id="boas-vindas">
+  <div class="section-header" style="color:#1e40af;border-left-color:#1e40af">
+    <span class="section-emoji">🏛️</span>
+    <span class="section-title" style="color:#1e40af">1. Bem-vindo ao JudicialMonitor</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>O JudicialMonitor monitora automaticamente seus processos judiciais em todos os tribunais do Brasil.</li>
+    <li><span class="bullet">•</span>Você não precisa entrar em nenhum site de tribunal. O sistema faz isso para você a cada 6 horas.</li>
+    <li><span class="bullet">•</span>Quando surgir uma movimentação importante, você recebe um aviso por e-mail automaticamente com resumo da IA.</li>
+    <li><span class="bullet">•</span>O sistema usa dados oficiais do CNJ (Conselho Nacional de Justiça) via DataJud API e é 100% seguro.</li>
+    <li><span class="bullet">•</span>Acesse pelo endereço: <strong>juds.wcom.udi.br</strong> — funciona no celular, tablet e computador.</li>
+    <li><span class="bullet">•</span>Painel administrativo avançado: <strong>juds.wcom.udi.br/admin.html</strong></li>
+    <li><span class="bullet">•</span>Todos os dados ficam na nuvem (Railway/PostgreSQL). Não depende de nenhum computador local.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 2 -->
+<div class="section" id="acesso">
+  <div class="section-header" style="color:#7c3aed;border-left-color:#7c3aed">
+    <span class="section-emoji">🔐</span>
+    <span class="section-title" style="color:#7c3aed">2. Como Acessar o Sistema</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>Acesse pelo endereço: <strong>juds.wcom.udi.br</strong></li>
+    <li><span class="bullet">•</span>Digite seu usuário e senha fornecidos pelo administrador.</li>
+    <li><span class="bullet">•</span>O sistema lembra de você por 30 dias. Só precisará digitar a senha novamente após esse período.</li>
+    <li><span class="bullet">•</span>Esqueceu a senha? Clique em "Esqueci minha senha" na tela de login para receber uma senha temporária por e-mail.</li>
+    <li><span class="bullet">•</span>Não tem acesso ainda? Clique em "Solicitar Acesso" na tela de login para se cadastrar.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 3 -->
+<div class="section" id="cadastro">
+  <div class="section-header" style="color:#059669;border-left-color:#059669">
+    <span class="section-emoji">📝</span>
+    <span class="section-title" style="color:#059669">3. Como se Cadastrar (Novo Usuário)</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>Na tela de login, clique no botão "Solicitar Acesso".</li>
+    <li><span class="bullet">•</span>Informe seu nome completo e seu endereço de e-mail.</li>
+    <li><span class="bullet">•</span>Você receberá um e-mail com um link para completar o cadastro. Verifique também a caixa de spam.</li>
+    <li><span class="bullet">•</span>Ao clicar no link, preencha seu CPF, função (Advogado, Familiar, Sócio), nome de usuário e crie uma senha.</li>
+    <li><span class="bullet">•</span>Após finalizar, aguarde o administrador liberar seu acesso. Você será notificado por e-mail.</li>
+    <li><span class="bullet">•</span>Com o acesso liberado, você verá apenas os processos que o administrador autorizou para você.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 4 -->
+<div class="section" id="painel">
+  <div class="section-header" style="color:#0891b2;border-left-color:#0891b2">
+    <span class="section-emoji">📊</span>
+    <span class="section-title" style="color:#0891b2">4. Painel Principal (Dashboard)</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>A tela inicial mostra um resumo de todos os seus processos organizados por cores.</li>
+    <li><span class="bullet">•</span><span class="tag-red">VERMELHO</span> — Atenção urgente! Penhora, execução, bloqueio de conta. Consulte seu advogado imediatamente.</li>
+    <li><span class="bullet">•</span><span class="tag-yellow">AMARELO</span> — Requer atenção. Citação, intimação, audiência marcada, prazo para recurso.</li>
+    <li><span class="bullet">•</span><span class="tag-green">VERDE</span> — Situação favorável. Decisão a seu favor, arquivamento, liberação de bloqueio.</li>
+    <li><span class="bullet">•</span><span class="tag-blue">AZUL</span> — Informativo. Movimentações de rotina sem impacto imediato.</li>
+    <li><span class="bullet">•</span>Clique em qualquer card colorido para ver os processos daquela categoria.</li>
+    <li><span class="bullet">•</span>O botão "Verificar Agora" consulta todos os tribunais na hora, sem precisar esperar 6 horas.</li>
+    <li><span class="bullet">•</span>Puxe a tela para baixo para atualizar os dados.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 5 -->
+<div class="section" id="processos">
+  <div class="section-header" style="color:#059669;border-left-color:#059669">
+    <span class="section-emoji">📋</span>
+    <span class="section-title" style="color:#059669">5. Lista de Processos</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>A aba "Processos" mostra todos os seus processos em uma lista.</li>
+    <li><span class="bullet">•</span>Use o campo de busca no topo para encontrar um processo pelo número, tribunal ou assunto.</li>
+    <li><span class="bullet">•</span>Os filtros coloridos (Todos, Urgente, Atenção, Favorável, Info) organizam por prioridade.</li>
+    <li><span class="bullet">•</span>Os processos mais urgentes aparecem sempre no topo da lista.</li>
+    <li><span class="bullet">•</span>Cada usuário vê apenas os processos que o administrador autorizou para ele.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 6 -->
+<div class="section" id="detalhe">
+  <div class="section-header" style="color:#d97706;border-left-color:#d97706">
+    <span class="section-emoji">🔍</span>
+    <span class="section-title" style="color:#d97706">6. Detalhes de um Processo</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>Ao tocar em um processo, você vê todas as informações: número, tribunal, partes, valor da causa e situação.</li>
+    <li><span class="bullet">•</span>A seção "Consultar Online" tem botões para abrir o processo nos sites oficiais: TJMG eproc, TJMG PJe, JusBrasil.</li>
+    <li><span class="bullet">•</span>A seção "Movimentações" mostra o histórico completo com datas, descrições e análise da IA.</li>
+    <li><span class="bullet">•</span>Movimentações marcadas com "NOVA" são recentes e ainda não foram visualizadas.</li>
+    <li><span class="bullet">•</span>O campo "Observações" é para anotar orientações, prazos e estratégias. Clique em Salvar após escrever.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 7 -->
+<div class="section" id="ia-analise">
+  <div class="section-header" style="color:#7c3aed;border-left-color:#7c3aed">
+    <span class="section-emoji">🤖</span>
+    <span class="section-title" style="color:#7c3aed">7. Análise Inteligente por IA (Motor V3)</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>O JudicialMonitor usa IA (Claude Haiku da Anthropic) para analisar cada movimentação automaticamente.</li>
+    <li><span class="bullet">•</span>A cada nova movimentação detectada, a IA identifica: categoria jurídica, urgência, impacto financeiro e patrimonial.</li>
+    <li><span class="bullet">•</span>A IA gera um resumo em linguagem simples — sem termos complicados — do que aconteceu no processo.</li>
+    <li><span class="bullet">•</span>Informa o provável próximo passo do processo e a providência que você ou seu advogado deve tomar.</li>
+    <li><span class="bullet">•</span>Cada movimentação recebe: nota de risco (0-100%), sucesso provável (0-100%), urgência (0-100%).</li>
+    <li><span class="bullet">•</span><strong>23 campos analisados</strong>: risco, prioridade, estado, categoria, evento financeiro, valor, perguntas sim/não (bloqueio, penhora, alvará, audiência, recurso, leilão, acordo, encerramento).</li>
+    <li><span class="bullet">•</span><span class="tag-red">CRÍTICA</span>: bloqueio, penhora, leilão, SISBAJUD — requer ação imediata.</li>
+    <li><span class="bullet">•</span><span class="tag-yellow">ALTA</span>: sentença, audiência, recurso, intimação com prazo.</li>
+    <li><span class="bullet">•</span><span class="tag-green">MÉDIA/BAIXA</span>: juntada, manifestação, atualização cadastral.</li>
+    <li><span class="bullet">•</span>Se a IA estiver indisponível, o sistema usa o dicionário jurídico como backup automático.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 8 -->
+<div class="section" id="radar">
+  <div class="section-header" style="color:#7c3aed;border-left-color:#7c3aed">
+    <span class="section-emoji">📡</span>
+    <span class="section-title" style="color:#7c3aed">8. Radar Processual — Visão Geral Inteligente</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>O Radar Processual está disponível no menu "Radar" do painel web (admin.html).</li>
+    <li><span class="bullet">•</span>Mostra um <strong>IIP — Índice de Inteligência Processual</strong> de 0 a 1.000 para cada processo.</li>
+    <li><span class="bullet">•</span>O IIP considera: grau de risco, valor financeiro envolvido, tempo parado e palavras-chave detectadas.</li>
+    <li><span class="bullet">•</span><strong>IIP &gt; 700</strong>: processo CRÍTICO — requer atenção imediata do advogado.</li>
+    <li><span class="bullet">•</span><strong>IIP 400–700</strong>: processo EM ATENÇÃO — acompanhe de perto.</li>
+    <li><span class="bullet">•</span><strong>IIP &lt; 400</strong>: processo estável — monitoramento normal.</li>
+    <li><span class="bullet">•</span>O Radar lista automaticamente: processos críticos, bloqueios detectados, dinheiro a levantar, processos parados &gt;180 dias.</li>
+    <li><span class="bullet">•</span>Use o Chat IA integrado para fazer perguntas em linguagem natural sobre os processos.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 9 -->
+<div class="section" id="chat-ia">
+  <div class="section-header" style="color:#059669;border-left-color:#059669">
+    <span class="section-emoji">💬</span>
+    <span class="section-title" style="color:#059669">9. Chat IA Jurídico</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>O Chat IA está na aba "Radar" do painel web, no campo "Pergunte sobre seus processos".</li>
+    <li><span class="bullet">•</span>Faça perguntas em português comum, sem precisar de termos jurídicos.</li>
+    <li><span class="bullet">•</span>Exemplos: "Qual processo tem maior risco agora?", "Tem algum dinheiro para levantar?", "Quais processos estão com penhora?"</li>
+    <li><span class="bullet">•</span>A IA analisa todos os seus processos e responde com base nas movimentações reais cadastradas no sistema.</li>
+    <li><span class="bullet">•</span>As respostas são em linguagem simples, com indicação de qual processo e movimentação gerou a resposta.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 10 -->
+<div class="section" id="kpis">
+  <div class="section-header" style="color:#0891b2;border-left-color:#0891b2">
+    <span class="section-emoji">📈</span>
+    <span class="section-title" style="color:#0891b2">10. KPIs e Indicadores Gerenciais</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>KPIs disponíveis via API em <code>/api/kpis</code> para integrações externas.</li>
+    <li><span class="bullet">•</span>Indicadores: total de processos, por risco (vermelho/amarelo/verde/azul), por tribunal.</li>
+    <li><span class="bullet">•</span>Financeiro: valor total envolvido, valor bloqueado, valor a levantar (alvarás detectados pela IA).</li>
+    <li><span class="bullet">•</span>Operacional: movimentações nos últimos 30 dias, processos parados há mais de 180 dias.</li>
+    <li><span class="bullet">•</span>Podem ser integrados com Excel, Power BI e outros sistemas via Webhook.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 11 -->
+<div class="section" id="dicionario">
+  <div class="section-header" style="color:#0891b2;border-left-color:#0891b2">
+    <span class="section-emoji">📚</span>
+    <span class="section-title" style="color:#0891b2">11. Dicionário Jurídico Mestre (230+ termos)</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>O sistema possui um dicionário jurídico com <strong>mais de 230 termos em 23 categorias</strong>.</li>
+    <li><span class="bullet">•</span><span class="tag-red">URGENTES (Vermelho)</span>: SISBAJUD, BacenJud, Bloqueio Judicial, Penhora, Leilão, Hasta Pública, Arrematação, INFOJUD, RENAJUD, Trânsito em Julgado, Falência, Recuperação Judicial.</li>
+    <li><span class="bullet">•</span><span class="tag-yellow">ATENÇÃO (Amarelo)</span>: Sentença, Acórdão, Audiência, Citação, Intimação, Prazo, Recurso, Embargos, Liminar, Tutela, Cumprimento de Sentença, Réu, Reclamante.</li>
+    <li><span class="bullet">•</span><span class="tag-green">FAVORÁVEIS (Verde)</span>: Desbloqueio, Alvará Judicial, Levantamento de Valores, Acordo Homologado, Arquivamento, Extinção, Quitação, Improcedente, Provimento.</li>
+    <li><span class="bullet">•</span>Categorias cobertas: processo de conhecimento, execução, recursos, tutelas, família, trabalhista, criminal, tributário, empresarial, previdenciário e mais.</li>
+    <li><span class="bullet">•</span>Você pode adicionar novas palavras-chave pelo painel, na aba "Palavras", sem programação.</li>
+    <li><span class="bullet">•</span>As palavras adicionadas entram em vigor em até 5 minutos, sem reiniciar o sistema.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 12 -->
+<div class="section" id="palavras-chave">
+  <div class="section-header" style="color:#dc2626;border-left-color:#dc2626">
+    <span class="section-emoji">🔑</span>
+    <span class="section-title" style="color:#dc2626">12. Gerenciar Palavras-chave</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>A aba "Palavras" no painel web permite adicionar termos jurídicos personalizados sem alterar código.</li>
+    <li><span class="bullet">•</span>Para adicionar: digite o termo (ex: "bloqueio de veículo"), escolha o nível de risco e clique em Adicionar.</li>
+    <li><span class="bullet">•</span>Níveis de risco disponíveis: Vermelho (urgente), Amarelo (atenção), Verde (favorável).</li>
+    <li><span class="bullet">•</span>Você pode remover qualquer palavra-chave clicando no botão X ao lado dela.</li>
+    <li><span class="bullet">•</span>As novas palavras-chave são carregadas automaticamente em até 5 minutos — sem reiniciar nada.</li>
+    <li><span class="bullet">•</span>Atende ao Requisito 6 da especificação técnica: adicionar palavras sem alterar código.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 13 -->
+<div class="section" id="importar-foto">
+  <div class="section-header" style="color:#059669;border-left-color:#059669">
+    <span class="section-emoji">📸</span>
+    <span class="section-title" style="color:#059669">13. Importar Processos por Foto (OCR com IA)</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>Cadastre processos simplesmente tirando um print (captura de tela) do site do tribunal.</li>
+    <li><span class="bullet">•</span>No painel web (admin.html), acesse a aba "Importar".</li>
+    <li><span class="bullet">•</span>Arraste a imagem direto para a área indicada, ou clique para selecionar o arquivo.</li>
+    <li><span class="bullet">•</span>A IA lê a imagem automaticamente e extrai: número, tribunal, partes, classe e situação.</li>
+    <li><span class="bullet">•</span>Você verá um formulário pré-preenchido para conferir e corrigir antes de confirmar.</li>
+    <li><span class="bullet">•</span>Aceita imagens JPG e PNG. Você pode soltar várias imagens de uma vez.</li>
+    <li><span class="bullet">•</span>Funciona com prints do PJe, eProc, eSAJ, JusBrasil, Escavador e outros sistemas judiciais.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 14 -->
+<div class="section" id="tarefas">
+  <div class="section-header" style="color:#d97706;border-left-color:#d97706">
+    <span class="section-emoji">✅</span>
+    <span class="section-title" style="color:#d97706">14. Tarefas Jurídicas</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>O sistema possui um módulo de tarefas jurídicas acessível via API em <code>/api/tarefas</code>.</li>
+    <li><span class="bullet">•</span>Crie tarefas vinculadas a processos: prazos de recurso, datas de audiência, providências pendentes.</li>
+    <li><span class="bullet">•</span>Status disponíveis: Pendente, Em Andamento, Concluída, Cancelada.</li>
+    <li><span class="bullet">•</span>Prioridades: Urgente, Alta, Média, Baixa — alinhadas com a análise da IA.</li>
+    <li><span class="bullet">•</span>As tarefas ficam registradas no banco de dados e podem ser integradas ao painel via API.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 15 -->
+<div class="section" id="webhooks">
+  <div class="section-header" style="color:#374151;border-left-color:#374151">
+    <span class="section-emoji">🔗</span>
+    <span class="section-title" style="color:#374151">15. Webhooks e Integrações Externas</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>Webhooks permitem que sistemas externos recebam notificações automáticas sobre seus processos.</li>
+    <li><span class="bullet">•</span>Configure em <code>/api/webhooks</code> com a URL do sistema que deve receber os avisos.</li>
+    <li><span class="bullet">•</span>Eventos disponíveis: <span class="highlight">movimentacao</span>, <span class="highlight">bloqueio</span>, <span class="highlight">alvara</span>, <span class="highlight">sentenca</span>.</li>
+    <li><span class="bullet">•</span>Quando um evento ocorre, o sistema envia um POST automático para a URL configurada com os dados.</li>
+    <li><span class="bullet">•</span>Permite integração com: CRMs jurídicos, ERP, Microsoft Teams, Slack, Power Automate, Zapier.</li>
+    <li><span class="bullet">•</span>Cada webhook pode ter um segredo (secret) para verificação de autenticidade da mensagem.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 16 -->
+<div class="section" id="notificacoes">
+  <div class="section-header" style="color:#dc2626;border-left-color:#dc2626">
+    <span class="section-emoji">🔔</span>
+    <span class="section-title" style="color:#dc2626">16. Notificações por E-mail</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>Quando o sistema detecta uma movimentação importante (vermelha ou amarela), envia um e-mail automaticamente.</li>
+    <li><span class="bullet">•</span>O e-mail é enviado para o endereço de cada pessoa cadastrada no sistema.</li>
+    <li><span class="bullet">•</span>Movimentações verdes e azuis (informativas) não geram e-mail para não sobrecarregar sua caixa.</li>
+    <li><span class="bullet">•</span>A verificação automática acontece a cada 6 horas. Você também pode acionar manualmente pelo painel.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 17 -->
+<div class="section" id="notificacoes-ia">
+  <div class="section-header" style="color:#d97706;border-left-color:#d97706">
+    <span class="section-emoji">📩</span>
+    <span class="section-title" style="color:#d97706">17. Notificações com Resumo da IA</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>Quando a IA detecta uma movimentação importante, o e-mail de alerta inclui o resumo gerado automaticamente.</li>
+    <li><span class="bullet">•</span>O e-mail mostra: o que aconteceu, o próximo passo provável e a providência recomendada.</li>
+    <li><span class="bullet">•</span>Movimentações CRÍTICAS (vermelho) e ALTAS (amarelo) sempre geram notificação por e-mail.</li>
+    <li><span class="bullet">•</span>Movimentações VERDES (favoráveis) também geram e-mail — são boas notícias que você precisa saber.</li>
+    <li><span class="bullet">•</span>Movimentações AZUIS (rotina) não geram e-mail para não sobrecarregar sua caixa de entrada.</li>
+    <li><span class="bullet">•</span>Ao receber o e-mail, abra o app e clique no processo para ver a análise completa da IA.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 18 -->
+<div class="section" id="usuarios">
+  <div class="section-header" style="color:#7c3aed;border-left-color:#7c3aed">
+    <span class="section-emoji">👤</span>
+    <span class="section-title" style="color:#7c3aed">18. Gerenciar Usuários (Administrador)</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>Somente o administrador tem acesso à tela de Configurações completa.</li>
+    <li><span class="bullet">•</span>Em Configurações, o card "Usuários com Acesso" lista todos os usuários cadastrados.</li>
+    <li><span class="bullet">•</span>Para adicionar um novo usuário manualmente, clique em "+ Novo" e preencha os dados.</li>
+    <li><span class="bullet">•</span>Para remover um usuário, clique no botão X vermelho ao lado do nome dele.</li>
+    <li><span class="bullet">•</span>Perfis disponíveis: Administrador, Gestor, Advogado, Cliente, Financeiro, Auditor, Viewer.</li>
+    <li><span class="bullet">•</span>Cada usuário viewer vê apenas os processos vinculados aos CPFs que o administrador liberou.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 19 -->
+<div class="section" id="pessoas">
+  <div class="section-header" style="color:#0891b2;border-left-color:#0891b2">
+    <span class="section-emoji">👥</span>
+    <span class="section-title" style="color:#0891b2">19. Monitorar Pessoas por CPF</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>O sistema pode monitorar processos de qualquer pessoa: familiares, sócios, empresas.</li>
+    <li><span class="bullet">•</span>Vá em Configurações, card "Pessoas Monitoradas", botão "+ Adicionar".</li>
+    <li><span class="bullet">•</span>Informe o nome completo e o CPF da pessoa. O CNPJ é opcional para empresas.</li>
+    <li><span class="bullet">•</span>Após adicionar, clique em "Verificar Agora" no painel para buscar os processos imediatamente.</li>
+    <li><span class="bullet">•</span>A busca é feita automaticamente a cada 6 horas em todos os tribunais cadastrados.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 20 -->
+<div class="section" id="numero">
+  <div class="section-header" style="color:#dc2626;border-left-color:#dc2626">
+    <span class="section-emoji">🔢</span>
+    <span class="section-title" style="color:#dc2626">20. Adicionar Processo por Número</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>Vá em Configurações, card "Adicionar Processo por Número".</li>
+    <li><span class="bullet">•</span>Cole ou digite o número completo do processo, por exemplo: 5003348-39.2017.8.13.0702.</li>
+    <li><span class="bullet">•</span>Selecione o tribunal (TJMG, TJSP, TRF1, TST, STJ) e clique em "Buscar e Adicionar".</li>
+    <li><span class="bullet">•</span>O sistema tenta encontrar os dados automaticamente no DataJud. Se não encontrar, salva o número para monitorar.</li>
+    <li><span class="bullet">•</span>Processos do eproc TJMG nem sempre estão no DataJud — nesses casos, use a importação por foto.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 21 -->
+<div class="section" id="pdf">
+  <div class="section-header" style="color:#374151;border-left-color:#374151">
+    <span class="section-emoji">📄</span>
+    <span class="section-title" style="color:#374151">21. Imprimir / Exportar PDF</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>Na tela de Processos, use o botão "Imprimir / PDF" para gerar um relatório.</li>
+    <li><span class="bullet">•</span>O relatório lista todos os processos com número, tribunal, risco e última movimentação.</li>
+    <li><span class="bullet">•</span>No navegador, escolha "Salvar como PDF" na janela de impressão para salvar o arquivo.</li>
+    <li><span class="bullet">•</span>Você pode imprimir apenas os processos filtrados, por exemplo somente os urgentes.</li>
+    <li><span class="bullet">•</span>Este manual também pode ser salvo como PDF: pressione Ctrl+P no navegador e escolha "Salvar como PDF".</li>
+  </ul></div>
+</div>
+
+<!-- Seção 22 -->
+<div class="section" id="seguranca">
+  <div class="section-header" style="color:#dc2626;border-left-color:#dc2626">
+    <span class="section-emoji">🛡️</span>
+    <span class="section-title" style="color:#dc2626">22. Segurança e Privacidade</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>Cada usuário tem acesso apenas aos processos que o administrador autorizou. Ninguém vê dados de outra pessoa.</li>
+    <li><span class="bullet">•</span>Senhas nunca aparecem na tela. A recuperação de senha só funciona via e-mail cadastrado.</li>
+    <li><span class="bullet">•</span>Ao clicar em "Sair", sua sessão é encerrada imediatamente.</li>
+    <li><span class="bullet">•</span>Não compartilhe seu usuário e senha com ninguém. Cada pessoa deve ter seu próprio acesso.</li>
+    <li><span class="bullet">•</span>Em caso de acesso suspeito, entre em contato com o administrador para revogar o acesso.</li>
+    <li><span class="bullet">•</span>A API de análise usa a chave ANTHROPIC_API_KEY configurada no servidor — nunca exposta ao usuário.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 23 -->
+<div class="section" id="dicas">
+  <div class="section-header" style="color:#92400e;border-left-color:#92400e">
+    <span class="section-emoji">💡</span>
+    <span class="section-title" style="color:#92400e">23. Dicas Importantes</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span>Sempre que receber um e-mail de alerta, abra o app e clique no processo para ver os detalhes da IA.</li>
+    <li><span class="bullet">•</span>Use as observações para registrar prazos importantes, por exemplo: "Prazo para recurso: 15/07/2026".</li>
+    <li><span class="bullet">•</span>Se um processo não aparecer automaticamente, use "Adicionar por número" ou "Importar por foto".</li>
+    <li><span class="bullet">•</span>O DataJud do CNJ nem sempre indexa processos do eproc TJMG imediatamente. Use a foto nesses casos.</li>
+    <li><span class="bullet">•</span>Mantenha o app salvo na tela inicial do seu celular para acesso rápido.</li>
+    <li><span class="bullet">•</span>Processos com prazo urgente aparecem em vermelho. Consulte seu advogado imediatamente nesses casos.</li>
+    <li><span class="bullet">•</span>Use o Radar Processual para ter uma visão geral de todos os processos de uma vez.</li>
+    <li><span class="bullet">•</span>Use o Chat IA para perguntas rápidas sem precisar navegar por cada processo individualmente.</li>
+  </ul></div>
+</div>
+
+<!-- Seção 24 -->
+<div class="section" id="infraestrutura">
+  <div class="section-header" style="color:#1e40af;border-left-color:#1e40af">
+    <span class="section-emoji">☁️</span>
+    <span class="section-title" style="color:#1e40af">24. Infraestrutura e Backup</span>
+  </div>
+  <div class="section-body"><ul>
+    <li><span class="bullet">•</span><strong>Backend e banco de dados</strong>: Railway (nuvem) — funciona 24/7 independente de qualquer computador local.</li>
+    <li><span class="bullet">•</span><strong>Banco de dados</strong>: PostgreSQL na nuvem Railway — todos os processos, movimentações e usuários ficam seguros na nuvem.</li>
+    <li><span class="bullet">•</span><strong>Código-fonte</strong>: GitHub (github.com/wcompda/judicial-monitor) — backup automático de todo o código.</li>
+    <li><span class="bullet">•</span><strong>Se perder o computador</strong>: o sistema continua funcionando normalmente em produção. Só precisa instalar Node.js e clonar o repositório para desenvolver novamente.</li>
+    <li><span class="bullet">•</span><strong>URL de acesso</strong>: juds.wcom.udi.br — hospedada e sempre disponível.</li>
+    <li><span class="bullet">•</span>Desenvolvido e mantido por <strong>WCOMTEC</strong> — Uberlândia/MG.</li>
+  </ul></div>
+</div>
+
+<!-- Rodapé -->
+<div class="footer">
+  <div style="font-size:32px;margin-bottom:8px">⚖️</div>
+  <strong>JudicialMonitor v4.0</strong> — IA + Radar Processual + Enterprise<br>
+  Desenvolvido por <strong>WCOMTEC</strong> — Uberlândia/MG — 2026<br>
+  <span style="color:#bbb">juds.wcom.udi.br | wcomtec.com.br</span><br><br>
+  <em style="font-size:11px">Para imprimir este manual em PDF: pressione Ctrl+P no navegador e escolha "Salvar como PDF"</em>
+</div>
+
+<div style="height:40px"></div>
+
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "judicial-backend-public",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3002", "public"],
+      "port": 3002
+    }
+  ]
+}
