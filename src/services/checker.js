@@ -1,7 +1,7 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 const { query } = require('../database/db');
 const { buscarTodosProcessos, buscarMovimentacoes } = require('./datajud');
-const { analyzeRisk } = require('./riskAnalyzer');
+const { analyzeRisk, analyzeRiskIA } = require('./riskAnalyzer');
 const { notificar } = require('./notifications');
 const { buscarContratos } = require('./pncp');
 
@@ -52,15 +52,19 @@ async function verificarProcessos() {
             [p.id, mov.data, mov.descricao]
           );
           if (!existe.length) {
-            const risco = analyzeRisk(mov.descricao);
+            // Tenta análise IA; fallback para palavras-chave
+            const ia = await analyzeRiskIA(mov.descricao, p.numero, p.tribunal);
+            const risco = ia ? ia.risco : analyzeRisk(mov.descricao);
+            const resumo = ia ? `[${ia.prioridade}] ${ia.resumo}${ia.providencia ? ' | ' + ia.providencia : ''}` : null;
+
             const { rows: [ins] } = await query(`
               INSERT INTO movimentacoes (processo_id, data, descricao, risco, notificado)
               VALUES ($1,$2,$3,$4,0) RETURNING id
-            `, [p.id, mov.data, mov.descricao, risco]);
+            `, [p.id, mov.data, resumo ? `${mov.descricao}\n\n💡 ${resumo}` : mov.descricao, risco]);
             novas++;
 
-            if (risco === 'vermelho' || risco === 'amarelo') {
-              await notificar({ processo: p, movimentacao: mov, risco, pessoa });
+            if (risco === 'vermelho' || risco === 'amarelo' || risco === 'verde') {
+              await notificar({ processo: p, movimentacao: { ...mov, resumoIA: resumo }, risco, pessoa });
               await query(`UPDATE movimentacoes SET notificado = 1 WHERE id = $1`, [ins.id]);
             }
           }
@@ -70,7 +74,9 @@ async function verificarProcessos() {
           `SELECT descricao FROM movimentacoes WHERE processo_id = $1`, [p.id]
         );
         const novoRisco = analyzeProcessoRisco(todasMovs);
-        await query(`UPDATE processos SET risco = $1, updated_at = NOW() WHERE id = $2`, [novoRisco, p.id]);
+        // Atualiza também campos de texto para corrigir encoding corrompido
+        await query(`UPDATE processos SET risco = $1, classe = $2, assunto = $3, situacao = $4, updated_at = NOW() WHERE id = $5`,
+          [novoRisco, p.classe, p.assunto, p.situacao, p.id]);
 
         if (novas > 0) console.log(`  [UPDATE] ${p.numero} — ${novas} nova(s) movimentação(ões)`);
       }

@@ -12,7 +12,7 @@ const INTERVALO_HORAS = parseInt(process.env.INTERVALO_HORAS || '6');
 const APP_PASSWORD = process.env.APP_PASSWORD || 'judicial2024';
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '15mb' }));
 app.use(express.static(require('path').join(__dirname, '../public')));
 
 // ── Auth ────────────────────────────────────────────────────────────────────
@@ -391,6 +391,20 @@ app.post('/api/processos/adicionar', autenticar, async (req, res) => {
         'Em andamento', new Date().toISOString(), new Date().toISOString(), partes, 0]);
 
     res.json({ success: true, data: { id, numero: numeroLimpo, tribunal }, origem: 'manual' });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+app.post('/api/processos/extrair-imagem', autenticar, async (req, res) => {
+  try {
+    const { imagem, mediaType } = req.body;
+    if (!imagem) return res.status(400).json({ success: false, message: 'Imagem obrigatória' });
+
+    const { extrairProcessoDeImagem } = require('./services/extractor');
+    const dados = await extrairProcessoDeImagem(imagem, mediaType || 'image/jpeg');
+
+    if (dados.erro) return res.json({ success: false, message: 'Número de processo não encontrado na imagem' });
+
+    res.json({ success: true, data: dados });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
