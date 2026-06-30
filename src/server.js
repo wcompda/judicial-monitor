@@ -408,6 +408,132 @@ app.post('/api/processos/extrair-imagem', autenticar, async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
+// ── Radar Processual Inteligente ─────────────────────────────────────────────
+
+app.get('/api/radar', autenticar, async (req, res) => {
+  try {
+    const { rows: processos } = await query(`
+      SELECT p.*,
+        (SELECT COUNT(*) FROM movimentacoes m WHERE m.processo_id = p.id AND m.notificado = 0) as novas,
+        (SELECT MAX(m.data) FROM movimentacoes m WHERE m.processo_id = p.id) as ultima_mov,
+        (SELECT m.descricao FROM movimentacoes m WHERE m.processo_id = p.id ORDER BY m.data DESC LIMIT 1) as ultima_desc
+      FROM processos p ORDER BY p.risco DESC, p.updated_at DESC
+    `);
+
+    const agora = new Date();
+    const radar = {
+      total: processos.length,
+      criticos: [],
+      dinheiro_levantar: [],
+      bloqueios_ativos: [],
+      parados_180: [],
+      novas_decisoes: [],
+      financeiro: { bloqueado: 0, liberado: 0, total_causa: 0 },
+      por_risco: { vermelho: 0, amarelo: 0, verde: 0, azul: 0 },
+      iip_media: 0,
+    };
+
+    let iipTotal = 0;
+
+    for (const p of processos) {
+      radar.por_risco[p.risco] = (radar.por_risco[p.risco] || 0) + 1;
+
+      // IIP — Índice de Inteligência Processual (0–1000)
+      const iip = calcIIP(p);
+      p.iip = iip;
+      iipTotal += iip;
+
+      // Críticos
+      if (p.risco === 'vermelho') radar.criticos.push({ id: p.id, numero: p.numero, tribunal: p.tribunal, iip, ultima: p.ultima_desc });
+
+      // Dinheiro para levantar (verde + menciona alvará/levantamento)
+      const desc = (p.ultima_desc || '').toLowerCase();
+      if (p.risco === 'verde' && (desc.includes('alvará') || desc.includes('levantamento') || desc.includes('liberação')))
+        radar.dinheiro_levantar.push({ id: p.id, numero: p.numero, valor: p.valor_causa, ultima: p.ultima_desc });
+
+      // Bloqueios ativos
+      if (desc.includes('bloqueio') || desc.includes('sisbajud') || desc.includes('penhora'))
+        radar.bloqueios_ativos.push({ id: p.id, numero: p.numero, tribunal: p.tribunal, ultima: p.ultima_desc });
+
+      // Parados há +180 dias
+      if (p.ultima_mov) {
+        const dias = Math.floor((agora - new Date(p.ultima_mov)) / 86400000);
+        if (dias > 180) radar.parados_180.push({ id: p.id, numero: p.numero, dias_parado: dias });
+      }
+
+      // Novas decisões (últimas 24h)
+      if (p.updated_at && (agora - new Date(p.updated_at)) < 86400000 && p.novas > 0)
+        radar.novas_decisoes.push({ id: p.id, numero: p.numero, tribunal: p.tribunal, novas: parseInt(p.novas) });
+
+      // Financeiro
+      if (p.valor_causa) radar.financeiro.total_causa += parseFloat(p.valor_causa) || 0;
+    }
+
+    radar.iip_media = processos.length ? Math.round(iipTotal / processos.length) : 0;
+    res.json({ success: true, data: radar });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+function calcIIP(p) {
+  let score = 0;
+  const desc = (p.ultima_desc || '').toLowerCase();
+  // Risco (0-400)
+  const riscoScore = { vermelho: 400, amarelo: 200, verde: 100, azul: 50 };
+  score += riscoScore[p.risco] || 0;
+  // Valor envolvido (0-200)
+  const valor = parseFloat(p.valor_causa) || 0;
+  if (valor > 100000) score += 200;
+  else if (valor > 10000) score += 100;
+  else if (valor > 1000) score += 50;
+  // Palavras críticas (0-200)
+  if (desc.includes('sisbajud') || desc.includes('bloqueio')) score += 200;
+  else if (desc.includes('penhora') || desc.includes('leilão')) score += 150;
+  else if (desc.includes('alvará') || desc.includes('levantamento')) score += 100;
+  else if (desc.includes('sentença') || desc.includes('audiência')) score += 80;
+  // Novidades (0-100)
+  if (parseInt(p.novas) > 0) score += Math.min(100, parseInt(p.novas) * 20);
+  // Tempo parado penaliza (-0 a -100, cap 0)
+  if (p.ultima_mov) {
+    const dias = Math.floor((new Date() - new Date(p.ultima_mov)) / 86400000);
+    if (dias > 365) score -= 100;
+    else if (dias > 180) score -= 50;
+  }
+  return Math.min(1000, Math.max(0, score));
+}
+
+// ── Chat IA Jurídico (módulo 22) ─────────────────────────────────────────────
+
+app.post('/api/chat', autenticar, async (req, res) => {
+  try {
+    const { pergunta, processoId } = req.body;
+    if (!pergunta) return res.status(400).json({ success: false, message: 'Pergunta obrigatória' });
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return res.status(503).json({ success: false, message: 'IA não configurada' });
+
+    let contexto = '';
+    if (processoId) {
+      const { rows } = await query(`SELECT p.*, array_agg(m.descricao ORDER BY m.data DESC) as movs FROM processos p LEFT JOIN movimentacoes m ON m.processo_id = p.id WHERE p.id = $1 GROUP BY p.id`, [processoId]);
+      if (rows[0]) {
+        const p = rows[0];
+        contexto = `Processo: ${p.numero} | Tribunal: ${p.tribunal} | Situação: ${p.situacao}\nMovimentações recentes: ${(p.movs || []).slice(0, 5).join(' | ')}`;
+      }
+    } else {
+      const { rows } = await query(`SELECT COUNT(*) as total, SUM(CASE WHEN risco='vermelho' THEN 1 ELSE 0 END) as urgentes FROM processos`);
+      contexto = `Carteira: ${rows[0].total} processos, ${rows[0].urgentes} urgentes.`;
+    }
+
+    const axios = require('axios');
+    const resp = await axios.post('https://api.anthropic.com/v1/messages', {
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 500,
+      system: `Você é o assistente jurídico da WCOMTEC. Responda perguntas sobre processos judiciais em linguagem simples e objetiva. Contexto: ${contexto}`,
+      messages: [{ role: 'user', content: pergunta }]
+    }, { headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 10000 });
+
+    res.json({ success: true, resposta: resp.data.content[0].text });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
 app.delete('/api/processos/:id', autenticar, async (req, res) => {
   await query(`DELETE FROM movimentacoes WHERE processo_id = $1`, [req.params.id]);
   await query(`DELETE FROM processos WHERE id = $1`, [req.params.id]);

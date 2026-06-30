@@ -210,6 +210,22 @@
     </div>
   </div>
 
+  <!-- RADAR PROCESSUAL -->
+  <div id="page-radar" class="page">
+    <div class="hero" style="background:linear-gradient(135deg,#7c3aed,#1e40af)">
+      <h2>📡 Radar Processual</h2>
+      <p>Inteligência jurídica em tempo real — IIP e alertas automáticos</p>
+    </div>
+    <div id="radar-content"><div class="loading">Carregando radar...</div></div>
+    <!-- Chat IA -->
+    <div class="config-card" style="margin-top:12px">
+      <div class="config-title">💬 Perguntar à IA Jurídica</div>
+      <input class="form-input" id="chat-input" placeholder='Ex: "Meu processo tem dinheiro para receber?" ou "Quais processos estão urgentes?"'>
+      <button class="btn-primary" onclick="enviarChat()">Perguntar</button>
+      <div id="chat-resposta" style="display:none;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:14px;margin-top:10px;font-size:13px;color:#1f2937;line-height:1.6"></div>
+    </div>
+  </div>
+
   <div id="page-palavras" class="page">
     <div class="hero">
       <h2>🔑 Palavras-chave</h2>
@@ -249,6 +265,7 @@
   <nav class="nav">
     <button class="active" onclick="showPage('dashboard')" id="nav-dashboard"><span>📊</span>Dashboard</button>
     <button onclick="showPage('processos')" id="nav-processos"><span>📋</span>Processos</button>
+    <button onclick="showPage('radar')" id="nav-radar"><span>📡</span>Radar</button>
     <button onclick="showPage('importar')" id="nav-importar"><span>📥</span>Importar</button>
     <button onclick="showPage('palavras')" id="nav-palavras"><span>🔑</span>Palavras</button>
     <button onclick="showPage('config')" id="nav-config"><span>⚙️</span>Config</button>
@@ -372,6 +389,7 @@ function showPage(name) {
   if (name === 'processos') loadProcessos();
   if (name === 'config') loadPessoas();
   if (name === 'palavras') loadPalavras();
+  if (name === 'radar') loadRadar();
 }
 
 function irParaFiltro(risco) {
@@ -592,6 +610,67 @@ async function testarConexao() {
   } catch(e) {
     alert('Falha na conexao!\n' + API);
   }
+}
+
+// ── RADAR PROCESSUAL ──
+async function loadRadar() {
+  const el = document.getElementById('radar-content');
+  el.innerHTML = '<div class="loading">🔄 Analisando carteira...</div>';
+  try {
+    const r = await fetch(API + '/api/radar', { headers: apiHeaders() });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.message);
+    const rd = d.data;
+
+    const iipBar = (iip) => {
+      const pct = Math.round(iip / 10);
+      const cor = iip >= 700 ? '#dc2626' : iip >= 400 ? '#d97706' : iip >= 200 ? '#2563eb' : '#16a34a';
+      return `<div style="background:#f3f4f6;border-radius:6px;height:8px;margin-top:4px"><div style="width:${pct}%;height:100%;border-radius:6px;background:${cor}"></div></div>`;
+    };
+
+    const listaHtml = (items, campos) => items.length
+      ? items.map(p => `<div style="padding:10px;border-bottom:1px solid #f3f4f6">
+          <div style="font-size:12px;font-family:monospace;color:#1e40af">${p.numero||p.id}</div>
+          ${campos.map(c => p[c] ? `<div style="font-size:11px;color:#6b7280">${p[c]}</div>` : '').join('')}
+          ${p.iip !== undefined ? `<div style="font-size:10px;color:#9ca3af">IIP: ${p.iip}/1000${iipBar(p.iip)}</div>` : ''}
+        </div>`).join('')
+      : '<p style="color:#9ca3af;font-size:13px;padding:12px;text-align:center">Nenhum encontrado</p>';
+
+    el.innerHTML = `
+      <!-- KPIs -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div class="stat-card" style="background:#fef2f2;border-color:#fca5a5"><div class="emoji">🔴</div><div class="num" style="color:#dc2626">${rd.por_risco.vermelho||0}</div><div class="lbl" style="color:#dc2626">Urgentes</div></div>
+        <div class="stat-card" style="background:#fffbeb;border-color:#fcd34d"><div class="emoji">🟡</div><div class="num" style="color:#d97706">${rd.por_risco.amarelo||0}</div><div class="lbl" style="color:#d97706">Atenção</div></div>
+        <div class="stat-card" style="background:#f0fdf4;border-color:#86efac"><div class="emoji">💰</div><div class="num" style="color:#16a34a">${rd.dinheiro_levantar.length}</div><div class="lbl" style="color:#16a34a">Levantar</div></div>
+        <div class="stat-card" style="background:#eff6ff;border-color:#93c5fd"><div class="emoji">📊</div><div class="num" style="color:#2563eb">${rd.iip_media}</div><div class="lbl" style="color:#2563eb">IIP Médio</div></div>
+      </div>
+      <!-- Seções -->
+      ${rd.criticos.length ? `<div class="config-card"><div class="config-title">🚨 Processos Críticos (${rd.criticos.length})</div>${listaHtml(rd.criticos, ['tribunal','ultima'])}</div>` : ''}
+      ${rd.dinheiro_levantar.length ? `<div class="config-card"><div class="config-title">💰 Dinheiro para Levantar (${rd.dinheiro_levantar.length})</div>${listaHtml(rd.dinheiro_levantar, ['ultima'])}</div>` : ''}
+      ${rd.bloqueios_ativos.length ? `<div class="config-card"><div class="config-title">🔒 Bloqueios Ativos (${rd.bloqueios_ativos.length})</div>${listaHtml(rd.bloqueios_ativos, ['tribunal','ultima'])}</div>` : ''}
+      ${rd.parados_180.length ? `<div class="config-card"><div class="config-title">⏸️ Parados +180 dias (${rd.parados_180.length})</div>${listaHtml(rd.parados_180, ['dias_parado'])}</div>` : ''}
+      ${rd.novas_decisoes.length ? `<div class="config-card"><div class="config-title">🆕 Novas Decisões Hoje (${rd.novas_decisoes.length})</div>${listaHtml(rd.novas_decisoes, ['tribunal','novas'])}</div>` : ''}
+      ${!rd.criticos.length && !rd.dinheiro_levantar.length && !rd.bloqueios_ativos.length ? '<div class="config-card" style="text-align:center;padding:24px"><div style="font-size:36px">✅</div><p style="color:#16a34a;font-weight:700;margin-top:8px">Carteira sem alertas críticos</p></div>' : ''}
+    `;
+  } catch(e) { el.innerHTML = `<div class="error-banner">Erro ao carregar radar: ${e.message}</div>`; }
+}
+
+async function enviarChat() {
+  const input = document.getElementById('chat-input');
+  const resp = document.getElementById('chat-resposta');
+  if (!input.value.trim()) return;
+  resp.style.display = 'block';
+  resp.innerHTML = '🤔 Analisando...';
+  try {
+    const r = await fetch(API + '/api/chat', {
+      method: 'POST', headers: apiHeaders(),
+      body: JSON.stringify({ pergunta: input.value.trim() })
+    });
+    const d = await r.json();
+    resp.innerHTML = d.success ? d.resposta.replace(/\n/g,'<br>') : '❌ ' + (d.message || 'Erro');
+    resp.style.background = d.success ? '#f0fdf4' : '#fef2f2';
+    resp.style.borderColor = d.success ? '#86efac' : '#fca5a5';
+  } catch(e) { resp.innerHTML = '❌ Erro de conexão'; }
 }
 
 // ── PALAVRAS-CHAVE ──
