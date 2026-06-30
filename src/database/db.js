@@ -92,6 +92,65 @@ async function initSchema() {
     created_at TIMESTAMPTZ DEFAULT NOW()
   )`).catch(() => {});
 
+  // ── Tabelas V7 Enterprise ────────────────────────────────────────────────
+  await query(`CREATE TABLE IF NOT EXISTS tarefas (
+    id SERIAL PRIMARY KEY,
+    processo_id TEXT REFERENCES processos(id) ON DELETE CASCADE,
+    usuario_id INTEGER,
+    descricao TEXT NOT NULL,
+    vencimento DATE,
+    status TEXT DEFAULT 'aberta',
+    prioridade TEXT DEFAULT 'media',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`).catch(() => {});
+
+  await query(`CREATE TABLE IF NOT EXISTS auditoria (
+    id SERIAL PRIMARY KEY,
+    usuario_id INTEGER,
+    usuario_nome TEXT,
+    acao TEXT NOT NULL,
+    recurso TEXT,
+    recurso_id TEXT,
+    ip TEXT,
+    origem TEXT DEFAULT 'web',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )`).catch(() => {});
+
+  await query(`CREATE TABLE IF NOT EXISTS alertas_config (
+    id SERIAL PRIMARY KEY,
+    usuario_id INTEGER,
+    nome TEXT NOT NULL,
+    condicao_campo TEXT NOT NULL,
+    condicao_valor TEXT NOT NULL,
+    canal TEXT DEFAULT 'email',
+    ativo INTEGER DEFAULT 1,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )`).catch(() => {});
+
+  await query(`CREATE TABLE IF NOT EXISTS documentos (
+    id SERIAL PRIMARY KEY,
+    processo_id TEXT REFERENCES processos(id) ON DELETE CASCADE,
+    tipo TEXT,
+    nome TEXT,
+    conteudo_ocr TEXT,
+    resumo_ia TEXT,
+    hash TEXT UNIQUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )`).catch(() => {});
+
+  await query(`CREATE TABLE IF NOT EXISTS webhooks (
+    id SERIAL PRIMARY KEY,
+    url TEXT NOT NULL,
+    eventos TEXT[] DEFAULT '{}',
+    ativo INTEGER DEFAULT 1,
+    secret TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )`).catch(() => {});
+
+  // Migrations perfis expandidos
+  await query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS perfil TEXT DEFAULT 'viewer'`).catch(() => {});
+
   // Tabela de palavras-chave configuráveis
   await query(`CREATE TABLE IF NOT EXISTS palavras_chave (
     id SERIAL PRIMARY KEY,

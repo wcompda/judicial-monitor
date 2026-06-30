@@ -601,6 +601,84 @@ app.post('/api/processos/:id/lido', autenticar, async (req, res) => {
 
 // ── Health ───────────────────────────────────────────────────────────────────
 
+// ── KPIs (Módulo 47) ─────────────────────────────────────────────────────────
+
+app.get('/api/kpis', autenticar, async (req, res) => {
+  try {
+    const [totais, porRisco, porTribunal, financeiro] = await Promise.all([
+      query(`SELECT COUNT(*) as total, COUNT(CASE WHEN risco='vermelho' THEN 1 END) as criticos, COUNT(CASE WHEN risco='verde' THEN 1 END) as favoraveis FROM processos`),
+      query(`SELECT risco, COUNT(*) as qtd FROM processos GROUP BY risco`),
+      query(`SELECT tribunal, COUNT(*) as qtd FROM processos GROUP BY tribunal ORDER BY qtd DESC LIMIT 10`),
+      query(`SELECT SUM(valor_causa) as total_causa, COUNT(CASE WHEN risco='vermelho' THEN 1 END) as bloqueios FROM processos`),
+    ]);
+    const movs = await query(`SELECT COUNT(*) as total, COUNT(CASE WHEN risco='vermelho' THEN 1 END) as criticas, COUNT(CASE WHEN risco='verde' THEN 1 END) as favoraveis FROM movimentacoes WHERE created_at > NOW() - INTERVAL '30 days'`);
+    res.json({ success: true, data: {
+      processos: totais.rows[0],
+      por_risco: porRisco.rows,
+      por_tribunal: porTribunal.rows,
+      financeiro: financeiro.rows[0],
+      movimentacoes_30d: movs.rows[0],
+    }});
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// ── Tarefas (Módulo 40) ───────────────────────────────────────────────────────
+
+app.get('/api/tarefas', autenticar, async (req, res) => {
+  const { rows } = await query(`SELECT t.*, p.numero, p.tribunal FROM tarefas t LEFT JOIN processos p ON p.id = t.processo_id ORDER BY t.vencimento ASC NULLS LAST, t.prioridade DESC`);
+  res.json({ success: true, data: rows });
+});
+
+app.post('/api/tarefas', autenticar, async (req, res) => {
+  const { processo_id, descricao, vencimento, prioridade } = req.body;
+  if (!descricao) return res.status(400).json({ success: false, message: 'Descrição obrigatória' });
+  const { rows: [t] } = await query(
+    `INSERT INTO tarefas (processo_id, descricao, vencimento, prioridade) VALUES ($1,$2,$3,$4) RETURNING *`,
+    [processo_id || null, descricao, vencimento || null, prioridade || 'media']
+  );
+  res.json({ success: true, data: t });
+});
+
+app.patch('/api/tarefas/:id', autenticar, async (req, res) => {
+  const { status } = req.body;
+  await query(`UPDATE tarefas SET status=$1, updated_at=NOW() WHERE id=$2`, [status, req.params.id]);
+  res.json({ success: true });
+});
+
+app.delete('/api/tarefas/:id', autenticar, async (req, res) => {
+  await query(`DELETE FROM tarefas WHERE id=$1`, [req.params.id]);
+  res.json({ success: true });
+});
+
+// ── Webhooks (Módulo 42) ──────────────────────────────────────────────────────
+
+app.get('/api/webhooks', autenticar, async (req, res) => {
+  const { rows } = await query(`SELECT * FROM webhooks ORDER BY created_at DESC`);
+  res.json({ success: true, data: rows });
+});
+
+app.post('/api/webhooks', autenticar, async (req, res) => {
+  const { url, eventos } = req.body;
+  if (!url) return res.status(400).json({ success: false, message: 'URL obrigatória' });
+  const { rows: [w] } = await query(
+    `INSERT INTO webhooks (url, eventos) VALUES ($1,$2) RETURNING *`,
+    [url, eventos || ['movimentacao','bloqueio','alvara','sentenca']]
+  );
+  res.json({ success: true, data: w });
+});
+
+app.delete('/api/webhooks/:id', autenticar, async (req, res) => {
+  await query(`DELETE FROM webhooks WHERE id=$1`, [req.params.id]);
+  res.json({ success: true });
+});
+
+// ── Auditoria (Módulo 35) ─────────────────────────────────────────────────────
+
+app.get('/api/auditoria', autenticar, async (req, res) => {
+  const { rows } = await query(`SELECT * FROM auditoria ORDER BY created_at DESC LIMIT 200`);
+  res.json({ success: true, data: rows });
+});
+
 // ── Palavras-chave configuráveis ─────────────────────────────────────────────
 
 app.get('/api/palavras-chave', autenticar, async (req, res) => {

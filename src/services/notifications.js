@@ -138,8 +138,29 @@ async function sendSMS({ processo, movimentacao, risco, pessoa }) {
   }
 }
 
-async function notificar(dados) {
-  await Promise.all([sendEmail(dados), sendSMS(dados), sendWhatsApp(dados)]);
+async function dispararWebhooks(evento, payload) {
+  try {
+    const { query } = require('../database/db');
+    const axios = require('axios');
+    const { rows } = await query(`SELECT * FROM webhooks WHERE ativo=1 AND $1 = ANY(eventos)`, [evento]);
+    for (const wh of rows) {
+      axios.post(wh.url, { evento, payload, timestamp: new Date().toISOString() },
+        { timeout: 5000, headers: { 'X-WCOM-Event': evento, ...(wh.secret ? { 'X-WCOM-Secret': wh.secret } : {}) } }
+      ).catch(() => {});
+    }
+  } catch {}
 }
 
-module.exports = { notificar, sendEmail, sendSMS, sendWhatsApp };
+async function notificar(dados) {
+  const evento = dados.risco === 'vermelho' ? 'bloqueio' :
+    dados.movimentacao?.ia?.alvara_determinado ? 'alvara' :
+    dados.movimentacao?.descricao?.toLowerCase().includes('sentença') ? 'sentenca' : 'movimentacao';
+  await Promise.all([
+    sendEmail(dados),
+    sendSMS(dados),
+    sendWhatsApp(dados),
+    dispararWebhooks(evento, { processo: dados.processo?.numero, risco: dados.risco, tribunal: dados.processo?.tribunal }),
+  ]);
+}
+
+module.exports = { notificar, sendEmail, sendSMS, sendWhatsApp, dispararWebhooks };
