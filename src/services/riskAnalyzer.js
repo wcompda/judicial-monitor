@@ -147,28 +147,46 @@ function getCategoria(texto) {
 // ── Análise inteligente via Claude ───────────────────────────────────────────
 async function analyzeRiskIA(texto, numero, tribunal) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return null; // sem chave, usa fallback
+  if (!apiKey) return null;
 
   try {
-    const prompt = `Você é especialista em direito processual brasileiro. Analise esta movimentação judicial e responda APENAS com JSON válido, sem texto extra:
+    const prompt = `Você é um Analista Jurídico Especialista em direito processual brasileiro.
 
 Processo: ${numero || 'não informado'} | Tribunal: ${tribunal || 'não informado'}
 Movimentação: "${texto}"
 
-Retorne:
+Analise e retorne APENAS um JSON válido, sem texto extra:
 {
   "risco": "vermelho|amarelo|verde|azul",
-  "prioridade": "Alta|Média|Baixa",
-  "categoria": "categoria do evento",
-  "resumo": "resumo em 1 frase simples para leigo",
-  "providencia": "o que o cidadão deve fazer agora (ou null se não precisar de ação)"
+  "prioridade": "Crítica|Alta|Média|Baixa",
+  "categoria": "string",
+  "subcategoria": "string",
+  "palavras_chave": ["string"],
+  "resumo": "resumo em linguagem simples para leigo em 1-2 frases",
+  "o_que_aconteceu": "string",
+  "proximo_passo": "o que provavelmente acontecerá em seguida",
+  "providencia": "o que o advogado/cidadão deve fazer agora (null se não precisar)",
+  "impacto_financeiro": true|false,
+  "impacto_patrimonial": true|false,
+  "valor_envolvido": "string ou null",
+  "grau_risco_pct": 0,
+  "grau_sucesso_pct": 0
 }
 
-Critérios de risco:
-- vermelho: bloqueio, penhora, execução, leilão, condenação, prazo expirado, SISBAJUD
-- amarelo: citação, intimação, audiência, prazo, recurso, decisão neutra
-- verde: desbloqueio, arquivamento, acordo, decisão favorável, levantamento de valores
-- azul: andamento de rotina sem impacto imediato`;
+Critérios de risco (campo "risco"):
+- vermelho: SISBAJUD, BacenJud, bloqueio judicial, penhora, leilão, hasta pública, arrematação, trânsito em julgado, mandado de prisão, fraude à execução, busca e apreensão deferida
+- amarelo: citação, intimação, audiência, prazo, sentença, acórdão, recurso, embargos, liminar, tutela, cumprimento de sentença, depósito judicial, precatório, RPV
+- verde: desbloqueio, levantamento de valores, alvará, liberação, acordo homologado, arquivamento, extinção, quitação, absolvição, cancelamento de penhora
+- azul: juntada, manifestação, distribuição, certidão, vista, remessa, digitalização, movimentação interna
+
+Prioridade:
+- Crítica: risco vermelho com impacto financeiro/patrimonial imediato
+- Alta: sentença, audiência, recurso, intimação com prazo
+- Média: juntada, manifestação, contestação, certidão
+- Baixa: movimentação interna, redistribuição, digitalização
+
+grau_risco_pct: 0-100 (chance de prejuízo ao cidadão)
+grau_sucesso_pct: 0-100 (chance de resultado favorável ao cidadão)`;
 
     const resp = await axios.post('https://api.anthropic.com/v1/messages', {
       model: 'claude-haiku-4-5-20251001',

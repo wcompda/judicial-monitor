@@ -52,19 +52,31 @@ async function verificarProcessos() {
             [p.id, mov.data, mov.descricao]
           );
           if (!existe.length) {
-            // Tenta análise IA; fallback para palavras-chave
+            // Análise IA completa com fallback para palavras-chave
             const ia = await analyzeRiskIA(mov.descricao, p.numero, p.tribunal);
             const risco = ia ? ia.risco : analyzeRisk(mov.descricao);
-            const resumo = ia ? `[${ia.prioridade}] ${ia.resumo}${ia.providencia ? ' | ' + ia.providencia : ''}` : null;
+
+            // Monta descrição enriquecida com análise IA
+            let descricaoFinal = mov.descricao;
+            if (ia) {
+              const linhas = [
+                `\n\n🤖 ANÁLISE IA — ${ia.prioridade || ''} | ${ia.categoria || ''}`,
+                `📋 ${ia.o_que_aconteceu || ia.resumo || ''}`,
+                ia.proximo_passo ? `⏭️ Próximo: ${ia.proximo_passo}` : null,
+                ia.providencia    ? `✅ Providência: ${ia.providencia}` : null,
+                (ia.grau_risco_pct != null) ? `⚠️ Risco: ${ia.grau_risco_pct}% | Sucesso: ${ia.grau_sucesso_pct}%` : null,
+              ].filter(Boolean);
+              descricaoFinal += linhas.join('\n');
+            }
 
             const { rows: [ins] } = await query(`
               INSERT INTO movimentacoes (processo_id, data, descricao, risco, notificado)
               VALUES ($1,$2,$3,$4,0) RETURNING id
-            `, [p.id, mov.data, resumo ? `${mov.descricao}\n\n💡 ${resumo}` : mov.descricao, risco]);
+            `, [p.id, mov.data, descricaoFinal, risco]);
             novas++;
 
             if (risco === 'vermelho' || risco === 'amarelo' || risco === 'verde') {
-              await notificar({ processo: p, movimentacao: { ...mov, resumoIA: resumo }, risco, pessoa });
+              await notificar({ processo: p, movimentacao: { ...mov, ia }, risco, pessoa });
               await query(`UPDATE movimentacoes SET notificado = 1 WHERE id = $1`, [ins.id]);
             }
           }

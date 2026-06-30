@@ -101,6 +101,95 @@ async function initSchema() {
     created_at TIMESTAMPTZ DEFAULT NOW()
   )`).catch(() => {});
 
+  // Seed — Dicionário Jurídico Mestre WCOM v1
+  const dictSeed = [
+    // ── CRÍTICA / VERMELHO ──
+    ['sisbajud','vermelho'],['bacenjud','vermelho'],['bloqueio judicial','vermelho'],
+    ['bloqueio eletrônico','vermelho'],['bloqueio de ativos','vermelho'],
+    ['bloqueio de contas','vermelho'],['bloqueio de saldo','vermelho'],
+    ['bloqueio parcial','vermelho'],['bloqueio integral','vermelho'],
+    ['ordem de bloqueio','vermelho'],['transferência judicial','vermelho'],
+    ['penhora online','vermelho'],['penhora de imóvel','vermelho'],
+    ['penhora de veículo','vermelho'],['penhora de faturamento','vermelho'],
+    ['penhora de salário','vermelho'],['penhora de ações','vermelho'],
+    ['penhora de quotas','vermelho'],['penhora de conta','vermelho'],
+    ['penhora de bens','vermelho'],['reforço da penhora','vermelho'],
+    ['substituição da penhora','vermelho'],['avaliação de bens','vermelho'],
+    ['hasta pública','vermelho'],['primeira praça','vermelho'],
+    ['segunda praça','vermelho'],['leilão judicial','vermelho'],
+    ['edital de leilão','vermelho'],['arrematação','vermelho'],
+    ['adjudicação','vermelho'],['carta de arrematação','vermelho'],
+    ['registro da arrematação','vermelho'],
+    ['infojud','vermelho'],['renajud','vermelho'],
+    ['serasajud','vermelho'],['cnib','vermelho'],
+    ['pesquisa patrimonial','vermelho'],['localização de bens','vermelho'],
+    ['pesquisa bancária','vermelho'],['pesquisa financeira','vermelho'],
+    ['trânsito em julgado','vermelho'],
+    ['tutela de evidência','vermelho'],
+    ['mandado de prisão','vermelho'],['prisão civil','vermelho'],
+    ['sequestro de bens','vermelho'],['arresto','vermelho'],
+    ['indisponibilidade','vermelho'],['constrição','vermelho'],
+    ['fraude à execução','vermelho'],['fraude contra credores','vermelho'],
+    ['astreintes','vermelho'],['multa por descumprimento','vermelho'],
+    // ── ALTA / AMARELO ──
+    ['apelação','amarelo'],['agravo de instrumento','amarelo'],
+    ['agravo interno','amarelo'],['agravo regimental','amarelo'],
+    ['embargos de declaração','amarelo'],['embargos infringentes','amarelo'],
+    ['embargos à execução','amarelo'],['embargos de terceiro','amarelo'],
+    ['recurso especial','amarelo'],['recurso extraordinário','amarelo'],
+    ['recurso ordinário','amarelo'],['recurso adesivo','amarelo'],
+    ['contrarrazões','amarelo'],['inadmissibilidade','amarelo'],
+    ['juízo de retratação','amarelo'],
+    ['sentença','amarelo'],['acórdão','amarelo'],
+    ['decisão interlocutória','amarelo'],['decisão monocrática','amarelo'],
+    ['tutela de urgência','amarelo'],['tutela antecipada','amarelo'],
+    ['liminar','amarelo'],['revogação da liminar','amarelo'],
+    ['concessão da liminar','amarelo'],
+    ['audiência inicial','amarelo'],['audiência de conciliação','amarelo'],
+    ['audiência de instrução','amarelo'],['audiência una','amarelo'],
+    ['audiência virtual','amarelo'],['audiência presencial','amarelo'],
+    ['designação de audiência','amarelo'],['redesignação','amarelo'],
+    ['citação','amarelo'],['intimação','amarelo'],
+    ['prazo fatal','amarelo'],['prazo encerrado','amarelo'],
+    ['decurso de prazo','amarelo'],['urgente','amarelo'],
+    ['cumprimento da sentença','amarelo'],['cumprimento de sentença','amarelo'],
+    ['execução','amarelo'],['liquidação','amarelo'],
+    ['expedição de mandado','amarelo'],['mandado','amarelo'],
+    ['carta precatória','amarelo'],['carta rogatória','amarelo'],
+    ['busca e apreensão','amarelo'],['busca e apreensão deferida','vermelho'],
+    ['contestação','amarelo'],['impugnação','amarelo'],
+    ['depósito judicial','amarelo'],['depósito recursal','amarelo'],
+    ['precatório','amarelo'],['rpv','amarelo'],
+    ['inventário','amarelo'],['habilitação de herdeiros','amarelo'],
+    ['mandado de segurança','amarelo'],
+    ['custas processuais','amarelo'],['honorários sucumbenciais','amarelo'],
+    // ── VERDE / FAVORÁVEL ──
+    ['desbloqueio','verde'],['levantamento do bloqueio','verde'],
+    ['cancelamento da penhora','verde'],['desconstituição da penhora','verde'],
+    ['alvará judicial','verde'],['alvará eletrônico','verde'],
+    ['expedição de alvará','verde'],['liberação de valores','verde'],
+    ['levantamento de valores','verde'],['restituição de valores','verde'],
+    ['pagamento ao executado','verde'],['satisfação do crédito','verde'],
+    ['quitação','verde'],['acordo homologado','verde'],
+    ['acordo','verde'],['conciliação','verde'],['transação','verde'],
+    ['arquivamento','verde'],['arquivado','verde'],['baixa definitiva','verde'],
+    ['extinção do processo','verde'],['processo extinto','verde'],
+    ['procedência','verde'],['provimento','verde'],
+    ['habeas corpus concedido','verde'],['absolvição','verde'],
+    ['remição','verde'],['devolução de valores','verde'],
+    // ── AZUL / INFORMATIVO ──
+    ['distribuição','azul'],['redistribuição','azul'],['autuação','azul'],
+    ['conclusão','azul'],['vista','azul'],['remessa','azul'],
+    ['retorno','azul'],['juntada','azul'],['petição','azul'],
+    ['manifestação','azul'],['certidão','azul'],['ofício','azul'],
+    ['digitalização','azul'],['migração','azul'],
+    ['movimentação interna','azul'],['atualização cadastral','azul'],
+  ];
+  for (const [palavra, risco] of dictSeed) {
+    await query(`INSERT INTO palavras_chave (palavra, risco) VALUES ($1, $2) ON CONFLICT (palavra) DO NOTHING`, [palavra, risco]).catch(() => {});
+  }
+  console.log('[DB] Dicionário jurídico seedado.');
+
   // Criar ou sincronizar usuário admin
   const adminUser = process.env.ADMIN_USER || 'wenrry';
   const adminPass = process.env.APP_PASSWORD || 'judicial2024';
