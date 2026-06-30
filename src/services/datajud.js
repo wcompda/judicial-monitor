@@ -4,6 +4,33 @@ require('dotenv').config();
 const BASE_URL = 'https://api-publica.datajud.cnj.jus.br';
 const API_KEY = process.env.DATAJUD_API_KEY || 'APIKey cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
 
+// Corrige mojibake clássico: UTF-8 bytes reinterpretados como Latin-1
+// Ex: "Ã©" (U+00C3 U+00A9) → bytes [C3 A9] → "é" em UTF-8
+function fixMojibake(s) {
+  if (!s || typeof s !== 'string') return s || '';
+  if (!/[À-ÿ]/.test(s)) return s; // sem Latin Extended, sem necessidade
+  try {
+    const bytes = Buffer.from(s, 'latin1');
+    const fixed = bytes.toString('utf8');
+    if (!fixed.includes('�') && fixed !== s) return fixed;
+  } catch {}
+  return s;
+}
+
+// POST com fallback de encoding: tenta UTF-8, cai em latin1 se necessário
+async function safePost(url, body) {
+  const res = await axios.post(url, body, { headers, timeout: 10000, responseType: 'arraybuffer' });
+  const buf = Buffer.from(res.data);
+  const asUtf8 = buf.toString('utf8');
+  // Se UTF-8 produziu replacement chars, tenta latin1
+  if (asUtf8.includes('�')) {
+    try {
+      return JSON.parse(buf.toString('latin1'));
+    } catch {}
+  }
+  return JSON.parse(asUtf8);
+}
+
 // Índices dos principais tribunais
 const TRIBUNAIS = [
   { codigo: 'tjsp', nome: 'TJSP - São Paulo' },
@@ -51,7 +78,7 @@ async function buscarPorNome(nome, tribunal) {
     };
 
     const url = `${BASE_URL}/api_publica_${tribunal}/_search`;
-    const { data } = await axios.post(url, body, { headers, timeout: 10000 });
+    const data = await safePost(url, body);
 
     return (data.hits?.hits || []).map(hit => normalizeProcesso(hit._source, tribunal));
   } catch (err) {
@@ -83,7 +110,7 @@ async function buscarPorCpf(cpf, tribunal) {
     };
 
     const url = `${BASE_URL}/api_publica_${tribunal}/_search`;
-    const { data } = await axios.post(url, body, { headers, timeout: 10000 });
+    const data = await safePost(url, body);
     return (data.hits?.hits || []).map(hit => normalizeProcesso(hit._source, tribunal));
   } catch {
     return [];
@@ -101,7 +128,7 @@ async function buscarPorNumero(numero) {
         size: 5
       };
       const url = `${BASE_URL}/api_publica_${t.codigo}/_search`;
-      const { data } = await axios.post(url, body, { headers, timeout: 8000 });
+      const data = await safePost(url, body);
       const hits = (data.hits?.hits || []).map(h => normalizeProcesso(h._source, t.codigo));
       resultados.push(...hits);
       if (resultados.length > 0) break;
@@ -118,12 +145,12 @@ async function buscarMovimentacoes(numero, tribunal) {
       size: 1
     };
     const url = `${BASE_URL}/api_publica_${tribunal}/_search`;
-    const { data } = await axios.post(url, body, { headers, timeout: 10000 });
+    const data = await safePost(url, body);
     const hit = data.hits?.hits?.[0]?._source;
     if (!hit) return [];
     return (hit.movimentos || []).map(m => ({
       data: m.dataHora || m.data,
-      descricao: m.nome || m.complementosTabelados?.map(c => c.descricao).join(', ') || 'Movimentação registrada',
+      descricao: fixMojibake(m.nome || m.complementosTabelados?.map(c => c.descricao).join(', ') || 'Movimentação registrada'),
       codigo: m.codigo
     }));
   } catch (err) {
@@ -160,10 +187,10 @@ function normalizeProcesso(source, tribunal) {
     id: `${tribunal}_${source.numeroProcesso}`,
     numero: source.numeroProcesso || '',
     tribunal: tribunal.toUpperCase(),
-    classe: source.classe?.nome || '',
-    assunto: source.assuntos?.map(a => a.nome).join(', ') || '',
-    situacao: source.movimentos?.[0]?.nome || 'Em andamento',
-    partes: JSON.stringify(source.partes || []),
+    classe: fixMojibake(source.classe?.nome || ''),
+    assunto: fixMojibake(source.assuntos?.map(a => a.nome).join(', ') || ''),
+    situacao: fixMojibake(source.movimentos?.[0]?.nome || 'Em andamento'),
+    partes: JSON.stringify((source.partes || []).map(p => ({ ...p, nome: fixMojibake(p.nome || '') }))),
     valor_causa: source.valorCausa || 0,
     data_distribuicao: source.dataAjuizamento || '',
     ultima_movimentacao: source.movimentos?.[0]?.dataHora || '',

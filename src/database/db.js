@@ -188,6 +188,98 @@ async function initSchema() {
   for (const [palavra, risco] of dictSeed) {
     await query(`INSERT INTO palavras_chave (palavra, risco) VALUES ($1, $2) ON CONFLICT (palavra) DO NOTHING`, [palavra, risco]).catch(() => {});
   }
+  // Seed V2 — Categorias 7-23 (Família, Imobiliário, Bancário, Trabalhista, Criminal, etc.)
+  const dictV2 = [
+    // CAT 7 — FAMÍLIA E SUCESSÕES
+    ['prisão civil','vermelho'],['débito alimentar','vermelho'],['execução de alimentos','vermelho'],
+    ['alienação parental','vermelho'],['suspensão do poder familiar','vermelho'],['destituição do poder familiar','vermelho'],
+    ['divórcio','amarelo'],['divórcio consensual','amarelo'],['divórcio litigioso','amarelo'],
+    ['separação judicial','amarelo'],['dissolução de união estável','amarelo'],
+    ['partilha de bens','amarelo'],['sobrepartilha','amarelo'],
+    ['inventário judicial','amarelo'],['inventário extrajudicial','amarelo'],
+    ['abertura de inventário','amarelo'],['habilitação de herdeiros','amarelo'],
+    ['arrolamento','amarelo'],['formal de partilha','amarelo'],['testamento','amarelo'],
+    ['alimentos','amarelo'],['pensão alimentícia','amarelo'],['revisional de alimentos','amarelo'],
+    ['exoneração de alimentos','amarelo'],['alimentos provisórios','amarelo'],
+    ['guarda','amarelo'],['guarda compartilhada','amarelo'],['guarda unilateral','amarelo'],
+    ['regulamentação de visitas','amarelo'],['poder familiar','amarelo'],
+    ['acordo homologado','verde'],['pacto antenupcial','azul'],
+    ['carta de adjudicação','verde'],['sucessão legítima','azul'],
+    // CAT 8 — DIREITO IMOBILIÁRIO
+    ['reintegração de posse','vermelho'],['imissão na posse','vermelho'],
+    ['despejo','vermelho'],['consolidação da propriedade','vermelho'],
+    ['manutenção de posse','amarelo'],['interdito proibitório','amarelo'],
+    ['usucapião','amarelo'],['desapropriação','amarelo'],
+    ['ação renovatória','amarelo'],['ação revisional de aluguel','amarelo'],
+    ['hipoteca','amarelo'],['alienação fiduciária','vermelho'],
+    ['registro imobiliário','azul'],['averbação','azul'],
+    // CAT 9 — BANCÁRIO
+    ['busca e apreensão','vermelho'],['capitalização de juros','amarelo'],
+    ['juros abusivos','amarelo'],['revisão contratual','amarelo'],
+    ['superendividamento','amarelo'],['protesto','vermelho'],
+    ['sustação de protesto','verde'],['nota promissória','amarelo'],
+    ['cheque','amarelo'],['duplicata','amarelo'],
+    ['cédula de crédito bancário','amarelo'],
+    // CAT 10 — RECUPERAÇÃO DE CRÉDITO
+    ['cobrança judicial','amarelo'],['confissão de dívida','amarelo'],
+    ['parcelamento','verde'],['novação','verde'],['prescrição','verde'],
+    ['decadência','verde'],
+    // CAT 11 — EMPRESARIAL
+    ['falência','vermelho'],['recuperação judicial','vermelho'],
+    ['recuperação extrajudicial','amarelo'],['plano de recuperação','amarelo'],
+    ['assembleia de credores','amarelo'],['habilitação de crédito','amarelo'],
+    ['impugnação de crédito','amarelo'],['liquidação','amarelo'],
+    ['dissolução societária','amarelo'],['exclusão de sócio','amarelo'],
+    ['apuração de haveres','amarelo'],['administrador judicial','azul'],
+    // CAT 12 — TRIBUTÁRIO
+    ['execução fiscal','vermelho'],['dívida ativa','vermelho'],['cda','vermelho'],
+    ['certidão positiva','amarelo'],['certidão negativa','verde'],
+    ['parcelamento fiscal','verde'],['compensação tributária','verde'],
+    ['repetição de indébito','verde'],['mandado de segurança tributário','amarelo'],
+    // CAT 13 — PREVIDENCIÁRIO
+    ['indeferimento','vermelho'],['concessão','verde'],
+    ['aposentadoria por invalidez','amarelo'],['auxílio-doença','amarelo'],
+    ['auxílio-acidente','amarelo'],['salário-maternidade','amarelo'],
+    ['pensão por morte','amarelo'],['loas','amarelo'],['bpc','amarelo'],
+    ['revisão da vida toda','amarelo'],['perícia médica','amarelo'],
+    ['inss','azul'],['carência','azul'],
+    // CAT 14 — TRABALHISTA
+    ['reclamação trabalhista','amarelo'],['fgts','amarelo'],
+    ['horas extras','amarelo'],['insalubridade','amarelo'],
+    ['periculosidade','amarelo'],['acidente de trabalho','vermelho'],
+    ['reintegração','verde'],['rescisão indireta','amarelo'],
+    ['verbas rescisórias','amarelo'],['estabilidade','amarelo'],
+    ['aviso prévio','amarelo'],['banco de horas','azul'],
+    // CAT 15 — CRIMINAL
+    ['prisão preventiva','vermelho'],['prisão temporária','vermelho'],
+    ['flagrante','vermelho'],['habeas corpus','amarelo'],
+    ['condenação criminal','vermelho'],['denúncia','amarelo'],
+    ['pronúncia','vermelho'],['relaxamento da prisão','verde'],
+    ['liberdade provisória','verde'],['absolvição','verde'],
+    ['livramento condicional','verde'],['progressão de regime','verde'],
+    ['inquérito policial','azul'],['queixa-crime','amarelo'],
+    // CAT 16-23 — EVENTOS ESPECIAIS
+    ['bloqueio sisbajud','vermelho'],['penhora online','vermelho'],
+    ['hasta pública','vermelho'],['bem arrematado','vermelho'],
+    ['remição','verde'],['adjudicação','vermelho'],
+    ['alvará eletrônico','verde'],['liberação de depósito','verde'],
+    ['pagamento ao exequente','verde'],['satisfação do crédito','verde'],
+    ['processo parado','azul'],['suspenso','azul'],['sobrestado','azul'],
+    ['aguardando manifestação','azul'],['aguardando cumprimento','azul'],
+    // Prazos
+    ['05 dias','amarelo'],['10 dias','amarelo'],['15 dias','amarelo'],
+    ['30 dias','amarelo'],['48 horas','vermelho'],['72 horas','vermelho'],
+    ['prazo fatal','vermelho'],['imediatamente','vermelho'],
+    ['intime-se','amarelo'],['cite-se','amarelo'],['cumpra-se','amarelo'],
+    ['manifeste-se','amarelo'],
+    // Valores / dinheiro
+    ['valor bloqueado','vermelho'],['valor liberado','verde'],
+    ['valor da condenação','amarelo'],['honorários advocatícios','amarelo'],
+    ['correção monetária','azul'],
+  ];
+  for (const [palavra, risco] of dictV2) {
+    await query(`INSERT INTO palavras_chave (palavra, risco) VALUES ($1, $2) ON CONFLICT (palavra) DO NOTHING`, [palavra, risco]).catch(() => {});
+  }
   console.log('[DB] Dicionário jurídico seedado.');
 
   // Criar ou sincronizar usuário admin

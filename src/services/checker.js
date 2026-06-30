@@ -59,12 +59,29 @@ async function verificarProcessos() {
             // Monta descrição enriquecida com análise IA
             let descricaoFinal = mov.descricao;
             if (ia) {
+              const pergs = ia.perguntas || {};
+              const flags = [
+                pergs.ha_dinheiro_receber   ? '💰 Há dinheiro a receber' : null,
+                pergs.ha_dinheiro_bloqueado  ? '🔒 Há dinheiro bloqueado' : null,
+                pergs.risco_penhora          ? '⚠️ Risco de penhora' : null,
+                pergs.prazo_recurso_correndo ? '⏰ Prazo de recurso correndo' : null,
+                pergs.audiencia_marcada      ? '📅 Audiência marcada' : null,
+                pergs.risco_leilao           ? '🔨 Risco de leilão' : null,
+                pergs.alvara_determinado     ? '✅ Alvará determinado' : null,
+                pergs.processo_encerrado     ? '🏁 Processo encerrado' : null,
+              ].filter(Boolean);
+
               const linhas = [
-                `\n\n🤖 ANÁLISE IA — ${ia.prioridade || ''} | ${ia.categoria || ''}`,
+                `\n\n🤖 IA JURÍDICA — ${ia.prioridade || ''} (${ia.prioridade_num || 0}/100) | ${ia.categoria || ''} › ${ia.subcategoria || ''}`,
+                ia.estado_processo ? `📊 Estado: ${ia.estado_processo}` : null,
                 `📋 ${ia.o_que_aconteceu || ia.resumo || ''}`,
-                ia.proximo_passo ? `⏭️ Próximo: ${ia.proximo_passo}` : null,
+                ia.proximo_passo  ? `⏭️ Próximo: ${ia.proximo_passo}` : null,
                 ia.providencia    ? `✅ Providência: ${ia.providencia}` : null,
-                (ia.grau_risco_pct != null) ? `⚠️ Risco: ${ia.grau_risco_pct}% | Sucesso: ${ia.grau_sucesso_pct}%` : null,
+                ia.valor_detectado ? `💵 Valor: ${ia.valor_detectado}` : null,
+                flags.length      ? flags.join(' | ') : null,
+                `📈 Risco: ${ia.grau_risco_pct || 0}% | Sucesso: ${ia.grau_sucesso_pct || 0}% | Urgência: ${ia.urgencia_pct || 0}%`,
+                (ia.prob_pagamento_pct > 50) ? `💰 ${ia.prob_pagamento_pct}% chance de recebimento` : null,
+                (ia.prob_recurso_pct > 50)   ? `⚖️ ${ia.prob_recurso_pct}% chance de recurso` : null,
               ].filter(Boolean);
               descricaoFinal += linhas.join('\n');
             }

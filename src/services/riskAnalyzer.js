@@ -150,43 +150,70 @@ async function analyzeRiskIA(texto, numero, tribunal) {
   if (!apiKey) return null;
 
   try {
-    const prompt = `Você é um Analista Jurídico Especialista em direito processual brasileiro.
+    const prompt = `Você é um Motor de Inteligência Jurídica especializado em direito processual brasileiro. Interprete a movimentação como um advogado experiente faria.
 
 Processo: ${numero || 'não informado'} | Tribunal: ${tribunal || 'não informado'}
 Movimentação: "${texto}"
 
-Analise e retorne APENAS um JSON válido, sem texto extra:
+Analise e responda APENAS com JSON válido (sem texto extra):
 {
   "risco": "vermelho|amarelo|verde|azul",
   "prioridade": "Crítica|Alta|Média|Baixa",
+  "prioridade_num": 0,
+  "estado_processo": "PARADO|EM_MOVIMENTO|RISCO_FINANCEIRO|ENTRADA_DINHEIRO|DECISAO|EXECUCAO",
   "categoria": "string",
   "subcategoria": "string",
   "palavras_chave": ["string"],
-  "resumo": "resumo em linguagem simples para leigo em 1-2 frases",
-  "o_que_aconteceu": "string",
+  "evento_financeiro": true,
+  "evento_patrimonial": true,
+  "valor_detectado": "R$ 0,00 ou null",
+  "o_que_aconteceu": "1 frase clara para leigo",
+  "resumo": "resumo completo em 2-3 frases em linguagem simples",
   "proximo_passo": "o que provavelmente acontecerá em seguida",
-  "providencia": "o que o advogado/cidadão deve fazer agora (null se não precisar)",
-  "impacto_financeiro": true|false,
-  "impacto_patrimonial": true|false,
-  "valor_envolvido": "string ou null",
+  "providencia": "ação urgente para advogado/cidadão (null se não precisar)",
   "grau_risco_pct": 0,
-  "grau_sucesso_pct": 0
+  "grau_sucesso_pct": 0,
+  "urgencia_pct": 0,
+  "complexidade_pct": 0,
+  "prob_recurso_pct": 0,
+  "prob_acordo_pct": 0,
+  "prob_pagamento_pct": 0,
+  "perguntas": {
+    "cliente_ganhou": true,
+    "ha_dinheiro_receber": false,
+    "ha_dinheiro_bloqueado": false,
+    "risco_penhora": false,
+    "prazo_recurso_correndo": false,
+    "audiencia_marcada": false,
+    "ordem_judicial_urgente": false,
+    "alvara_determinado": false,
+    "risco_leilao": false,
+    "processo_encerrado": false,
+    "possibilidade_acordo": false
+  }
 }
 
-Critérios de risco (campo "risco"):
-- vermelho: SISBAJUD, BacenJud, bloqueio judicial, penhora, leilão, hasta pública, arrematação, trânsito em julgado, mandado de prisão, fraude à execução, busca e apreensão deferida
-- amarelo: citação, intimação, audiência, prazo, sentença, acórdão, recurso, embargos, liminar, tutela, cumprimento de sentença, depósito judicial, precatório, RPV
-- verde: desbloqueio, levantamento de valores, alvará, liberação, acordo homologado, arquivamento, extinção, quitação, absolvição, cancelamento de penhora
-- azul: juntada, manifestação, distribuição, certidão, vista, remessa, digitalização, movimentação interna
+MOTORES DE CLASSIFICAÇÃO:
 
-Prioridade:
-- Crítica: risco vermelho com impacto financeiro/patrimonial imediato
-- Alta: sentença, audiência, recurso, intimação com prazo
-- Média: juntada, manifestação, contestação, certidão
-- Baixa: movimentação interna, redistribuição, digitalização
+Estado do processo:
+- PARADO: sem movimentação relevante, arquivado provisoriamente, suspenso, sobrestado
+- EM_MOVIMENTO: juntada, petição, manifestação, despacho, intimação recente
+- RISCO_FINANCEIRO: SISBAJUD, bloqueio, penhora, arresto, leilão, busca e apreensão
+- ENTRADA_DINHEIRO: alvará, levantamento, liberação, pagamento, precatório, RPV
+- DECISAO: sentença, acórdão, liminar, tutela, trânsito em julgado
+- EXECUCAO: cumprimento de sentença, execução, hasta pública
 
-grau_risco_pct: 0-100 (chance de prejuízo ao cidadão)
-grau_sucesso_pct: 0-100 (chance de resultado favorável ao cidadão)`;
+Risco (cor):
+- vermelho: SISBAJUD/BacenJud, bloqueio judicial, penhora, leilão, hasta pública, arrematação, trânsito em julgado, mandado prisão, prisão civil, falência, busca e apreensão deferida, execução fiscal, alienação fiduciária consolidada
+- amarelo: citação, intimação, audiência, prazo, sentença, acórdão, recurso, embargos, liminar, tutela, cumprimento de sentença, inventário, divórcio litigioso, reclamação trabalhista, habeas corpus
+- verde: desbloqueio, levantamento, alvará, liberação, acordo homologado, arquivamento, extinção, quitação, absolvição, certidão negativa, progressão de regime, relaxamento prisão
+- azul: juntada, manifestação, distribuição, certidão, vista, remessa, digitalização, petição rotineira
+
+prioridade_num: 100=Bloqueio/Penhora/Leilão/Alvará/Sentença/Liminar | 90=Audiência/Acórdão/Embargos/Apelação | 70=Contestação/Manifestação/Perícia | 40=Juntada/Conclusão/Certidão | 10=Redistribuição/Digitalização
+
+Detecção de prazos: se mencionar "05 dias", "15 dias", "48 horas", "72 horas", "imediatamente", "intime-se", "cite-se" → urgencia_pct acima de 70
+
+Detecção de valores: extraia qualquer "R$", "reais", "mil reais" e coloque em valor_detectado`;
 
     const resp = await axios.post('https://api.anthropic.com/v1/messages', {
       model: 'claude-haiku-4-5-20251001',
