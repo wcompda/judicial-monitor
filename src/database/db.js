@@ -360,7 +360,7 @@ async function initSchema() {
 
   // Config padrão
   await query(`INSERT INTO config (chave, valor) VALUES ('ultima_verificacao', $1) ON CONFLICT DO NOTHING`, [new Date(0).toISOString()]);
-  await query(`INSERT INTO config (chave, valor) VALUES ('intervalo_horas', '6') ON CONFLICT DO NOTHING`);
+  await query(`INSERT INTO config (chave, valor) VALUES ('intervalo_horas', '3') ON CONFLICT DO NOTHING`);
 
   // Pessoa padrão
   const userCpf = process.env.USER_CPF || '';

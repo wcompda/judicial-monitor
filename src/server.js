@@ -8,7 +8,7 @@ const { verificarProcessos } = require('./services/checker');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const INTERVALO_HORAS = parseInt(process.env.INTERVALO_HORAS || '6');
+const INTERVALO_HORAS = parseInt(process.env.INTERVALO_HORAS || '3');
 const APP_PASSWORD = process.env.APP_PASSWORD || 'judicial2024';
 
 app.use(cors());

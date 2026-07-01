@@ -41,7 +41,7 @@ function buildHtml(processo, movimentacao, risco, nomePessoa) {
     + '</table>' + aviso + '</div>'
     + '<div style="background:#f9fafb;padding:16px;text-align:center;border-radius:0 0 12px 12px">'
     + (logoUrl ? '<img src="' + logoUrl + '" alt="Logo" style="height:28px;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto" />' : '')
-    + '<p style="margin:0;color:#6b7280;font-size:12px">JudicialMonitor - Verificacao automatica a cada 6 horas</p>'
+    + '<p style="margin:0;color:#6b7280;font-size:12px">JudicialMonitor - Verificacao automatica a cada 3 horas</p>'
     + '</div></div>';
 }
 
