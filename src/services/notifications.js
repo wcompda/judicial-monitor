@@ -75,8 +75,9 @@ async function sendEmail({ processo, movimentacao, risco, pessoa }) {
 }
 
 async function sendWhatsApp({ processo, movimentacao, risco, pessoa }) {
-  const ZAPI_URL      = 'https://api.z-api.io/instances/3F54C3F77B9A42FB81D7EA27A312B1BA/token/052DEACFB706D0C63D912F2F';
-  const ZAPI_TOKEN    = '052DEACFB706D0C63D912F2F';
+  const ZAPI_INSTANCE = process.env.ZAPI_INSTANCE || '';
+  const ZAPI_TOKEN    = process.env.ZAPI_TOKEN || '';
+  const ZAPI_URL      = `https://api.z-api.io/instances/${ZAPI_INSTANCE}/token/${ZAPI_TOKEN}`;
   const WA_NUMERO     = process.env.WA_NOTIFY_NUMBER || '+553499520032';
 
   const cor        = RISK_COLORS[risco] || RISK_COLORS.azul;

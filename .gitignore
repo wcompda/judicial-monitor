@@ -2,4 +2,6 @@ node_modules/
 .env
 judicial.db
 *.db
+*.db-shm
+*.db-wal
 *.log
