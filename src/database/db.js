@@ -237,6 +237,11 @@ async function initSchema() {
     ['habeas corpus concedido','verde'],['absolvição','verde'],
     ['remição','verde'],['devolução de valores','verde'],
     // ── AZUL / INFORMATIVO ──
+    // ── ESPÓLIO / HERANÇA ──
+    ['espólio','amarelo'],['espolio','amarelo'],['inventário','amarelo'],
+    ['arrolamento','amarelo'],['herdeiro','amarelo'],['meação','amarelo'],
+    ['partilha','amarelo'],['sucessão','amarelo'],['testamento','amarelo'],
+    // ── AZUL / INFORMATIVO ──
     ['distribuição','azul'],['redistribuição','azul'],['autuação','azul'],
     ['conclusão','azul'],['vista','azul'],['remessa','azul'],
     ['retorno','azul'],['juntada','azul'],['petição','azul'],
