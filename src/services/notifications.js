@@ -75,9 +75,10 @@ async function sendEmail({ processo, movimentacao, risco, pessoa }) {
 }
 
 async function sendWhatsApp({ processo, movimentacao, risco, pessoa }) {
-  const ZAPI_INSTANCE = process.env.ZAPI_INSTANCE || '';
-  const ZAPI_TOKEN    = process.env.ZAPI_TOKEN || '';
-  const ZAPI_URL      = `https://api.z-api.io/instances/${ZAPI_INSTANCE}/token/${ZAPI_TOKEN}`;
+  const ZAPI_INSTANCE    = process.env.ZAPI_INSTANCE || '';
+  const ZAPI_TOKEN       = process.env.ZAPI_TOKEN || '';
+  const ZAPI_CLIENT_TOKEN = process.env.ZAPI_CLIENT_TOKEN || ZAPI_TOKEN;
+  const ZAPI_URL         = `https://api.z-api.io/instances/${ZAPI_INSTANCE}/token/${ZAPI_TOKEN}`;
   const WA_NUMERO     = process.env.WA_NOTIFY_NUMBER || '+553499520032';
 
   const cor        = RISK_COLORS[risco] || RISK_COLORS.azul;
@@ -106,7 +107,7 @@ async function sendWhatsApp({ processo, movimentacao, risco, pessoa }) {
       phone: WA_NUMERO,
       message: msg
     }, {
-      headers: { 'Content-Type': 'application/json', 'Client-Token': ZAPI_TOKEN },
+      headers: { 'Content-Type': 'application/json', 'Client-Token': ZAPI_CLIENT_TOKEN },
       timeout: 10000
     });
     console.log('[WHATSAPP] Notificação enviada para ' + WA_NUMERO);
