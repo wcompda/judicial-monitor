@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NFS-e - AMORE BOUTIQUE RH E ADMINISTRACAO LTDA</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --tinta:       #1a1a1a;
+    --tinta-fraca: #5a5a5a;
+    --linha:       #c9ccd1;
+    --linha-forte: #7a8088;
+    --fundo-bloco: #f2f4f6;
+    --destaque:    #14406b;
+  }
+
+  body {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--tinta);
+    background: #e8eaed;
+    padding: 24px 12px;
+  }
+
+  .folha {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    padding: 12mm 12mm 10mm;
+    background: #fff;
+    box-shadow: 0 2px 14px rgba(0,0,0,.18);
+  }
+
+  /* ---------- Cabeçalho ---------- */
+  .cabecalho {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--linha-forte);
+  }
+  .cabecalho .brasao {
+    width: 78px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid var(--linha-forte);
+    background: var(--fundo-bloco);
+    font-size: 9px;
+    color: var(--tinta-fraca);
+    text-align: center;
+    padding: 6px;
+  }
+  .cabecalho .titulo {
+    flex: 1;
+    padding: 10px 14px;
+    text-align: center;
+  }
+  .cabecalho .titulo h1 {
+    font-size: 15px;
+    letter-spacing: .4px;
+    color: var(--destaque);
+    text-transform: uppercase;
+  }
+  .cabecalho .titulo h2 {
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 2px;
+    text-transform: uppercase;
+  }
+  .cabecalho .titulo p {
+    font-size: 10px;
+    color: var(--tinta-fraca);
+    margin-top: 3px;
+  }
+  .cabecalho .identificacao {
+    width: 190px;
+    border-left: 1px solid var(--linha-forte);
+    padding: 8px 10px;
+  }
+  .cabecalho .identificacao div { margin-bottom: 4px; }
+  .cabecalho .identificacao div:last-child { margin-bottom: 0; }
+
+  /* ---------- Blocos e grades ---------- */
+  .bloco {
+    border: 1px solid var(--linha-forte);
+    border-top: none;
+  }
+  .bloco > .faixa {
+    background: var(--destaque);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+  }
+  .grade {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+  }
+  .campo {
+    padding: 5px 10px 6px;
+    border-right: 1px solid var(--linha);
+    border-bottom: 1px solid var(--linha);
+    min-height: 40px;
+  }
+  .campo:last-child { border-right: none; }
+  .grade > .campo.fim-linha { border-right: none; }
+  .grade > .campo.sem-base  { border-bottom: none; }
+
+  .rotulo {
+    display: block;
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    color: var(--tinta-fraca);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .valor      { font-size: 11px; word-break: break-word; }
+  .valor.forte{ font-weight: 700; }
+  .valor.mono { font-family: "Consolas", "Courier New", monospace; letter-spacing: .3px; }
+
+  .c2  { grid-column: span 2; }  .c3  { grid-column: span 3; }
+  .c4  { grid-column: span 4; }  .c5  { grid-column: span 5; }
+  .c6  { grid-column: span 6; }  .c7  { grid-column: span 7; }
+  .c8  { grid-column: span 8; }  .c9  { grid-column: span 9; }
+  .c12 { grid-column: span 12; }
+
+  /* ---------- Discriminação ---------- */
+  .discriminacao {
+    padding: 8px 10px 14px;
+    min-height: 90px;
+    border-bottom: 1px solid var(--linha);
+  }
+  .discriminacao p { margin-top: 4px; text-align: justify; }
+
+  /* ---------- Totais ---------- */
+  .totais { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .totais .campo { text-align: right; min-height: 44px; }
+  .totais .campo .rotulo { text-align: right; }
+  .liquido {
+    background: var(--fundo-bloco);
+    border-top: 2px solid var(--destaque);
+    padding: 8px 10px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: baseline;
+    gap: 14px;
+  }
+  .liquido .rotulo { margin: 0; font-size: 10px; color: var(--tinta); }
+  .liquido .cifra {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--destaque);
+    font-family: "Consolas", "Courier New", monospace;
+  }
+
+  .aviso {
+    padding: 6px 10px;
+    font-size: 9.5px;
+    color: var(--tinta-fraca);
+    border-bottom: 1px solid var(--linha);
+  }
+
+  /* ---------- Rodapé de autenticidade ---------- */
+  .autenticidade {
+    margin-top: 10px;
+    border: 1px solid var(--linha-forte);
+    padding: 10px 12px;
+    font-size: 9.5px;
+    color: var(--tinta-fraca);
+  }
+  .autenticidade h3 {
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--tinta);
+    margin-bottom: 5px;
+  }
+  .autenticidade p { margin-bottom: 3px; }
+  .autenticidade .codigo {
+    font-family: "Consolas", "Courier New", monospace;
+    font-weight: 700;
+    color: var(--tinta);
+    letter-spacing: 1px;
+  }
+  .rodape-legal {
+    margin-top: 8px;
+    text-align: center;
+    font-size: 8.5px;
+    color: var(--tinta-fraca);
+  }
+
+  /* Campos a preencher com os dados oficiais do portal municipal */
+  .preencher {
+    color: #8a6d00;
+    background: #fff6d9;
+    padding: 0 4px;
+    border-radius: 2px;
+  }
+
+  /* ---------- Impressão ---------- */
+  @page { size: A4 portrait; margin: 10mm; }
+  @media print {
+    body   { background: #fff; padding: 0; }
+    .folha { width: auto; min-height: auto; margin: 0; padding: 0; box-shadow: none; }
+    .bloco, .cabecalho, .autenticidade { break-inside: avoid; }
+    .preencher { background: none; color: var(--tinta); }
+  }
+</style>
+</head>
+<body>
+
+<div class="folha">
+
+  <!-- ============ CABEÇALHO ============ -->
+  <header class="cabecalho">
+    <div class="brasao">PREFEITURA<br>MUNICIPAL</div>
+
+    <div class="titulo">
+      <h1>Nota Fiscal de Serviço Eletrônica</h1>
+      <h2>NFS-e</h2>
+      <p>Documento emitido conforme a legislação municipal do ISSQN</p>
+    </div>
+
+    <div class="identificacao">
+      <div>
+        <span class="rotulo">Número da NFS-e</span>
+        <span class="valor forte mono preencher">__________</span>
+      </div>
+      <div>
+        <span class="rotulo">Data e hora de emissão</span>
+        <span class="valor mono preencher">__/__/____ __:__</span>
+      </div>
+      <div>
+        <span class="rotulo">Competência</span>
+        <span class="valor mono preencher">__/____</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ PRESTADOR ============ -->
+  <section class="bloco">
+    <div class="faixa">Prestador de Serviços</div>
+    <div class="grade">
+      <div class="campo c12 fim-linha">
+        <span class="rotulo">Razão Social</span>
+        <span class="valor forte preencher">_______________________________________________</span>
+      </div>
+      <div class="campo c5">
+        <span class="rotulo">CNPJ</span>
+        <span class="valor mono">52.518.853/0001-13</span>
+      </div>
+      <div class="campo c4">
+        <span class="rotulo">Inscrição Municipal</span>
+        <span class="valor mono">65591900</span>
+      </div>
+      <div class="campo c3 fim-linha">
+        <span class="rotulo">Inscrição Estadual</span>
+        <span class="valor">ISENTO</span>
+      </div>
+      <div class="campo c8 sem-base">
+        <span class="rotulo">Endereço</span>
+        <span class="valor preencher">_______________________________________</span>
+      </div>
+      <div class="campo c4 fim-linha sem-base">
+        <span class="rotulo">Telefone / E-mail</span>
+        <span class="valor preencher">______________________</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TOMADOR ============ -->
+  <section class="bloco">
+    <div class="faixa">Tomador de Serviços</div>
+    <div class="grade">
+      <div class="campo c12 fim-linha">
+        <span class="rotulo">Razão Social</span>
+        <span class="valor forte">AMORE BOUTIQUE RH E ADMINISTRACAO LTDA</span>
+      </div>
+      <div class="campo c5">
+        <span class="rotulo">CNPJ</span>
+        <span class="valor mono">65.459.724/0001-43</span>
+      </div>
+      <div class="campo c4">
+        <span class="rotulo">Inscrição Municipal</span>
+        <span class="valor">—</span>
+      </div>
+      <div class="campo c3 fim-linha">
+        <span class="rotulo">CEP</span>
+        <span class="valor mono">38400-130</span>
+      </div>
+      <div class="campo c9">
+        <span class="rotulo">Endereço</span>
+        <span class="valor">R AFONSO PENA, 709 &ndash; LOJA FUNDO</span>
+      </div>
+      <div class="campo c3 fim-linha">
+        <span class="rotulo">Bairro</span>
+        <span class="valor">CENTRO</span>
+      </div>
+      <div class="campo c4 sem-base">
+        <span class="rotulo">Município / UF</span>
+        <span class="valor">UBERLANDIA / MG</span>
+      </div>
+      <div class="campo c5 sem-base">
+        <span class="rotulo">E-mail</span>
+        <span class="valor">FINANCEIROAMOREBOUTIQUE@GMAIL.COM</span>
+      </div>
+      <div class="campo c3 fim-linha sem-base">
+        <span class="rotulo">Telefone</span>
+        <span class="valor mono">(34) 97336-625</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SERVIÇO ============ -->
+  <section class="bloco">
+    <div class="faixa">Discriminação dos Serviços</div>
+
+    <div class="grade">
+      <div class="campo c4">
+        <span class="rotulo">Item da Lista de Serviço</span>
+        <span class="valor forte mono">14.01</span>
+      </div>
+      <div class="campo c5">
+        <span class="rotulo">Código de Tributação Municipal</span>
+        <span class="valor mono">952150000</span>
+      </div>
+      <div class="campo c3 fim-linha">
+        <span class="rotulo">Município da Prestação</span>
+        <span class="valor">UBERLANDIA / MG</span>
+      </div>
+    </div>
+
+    <div class="discriminacao">
+      <span class="rotulo">Descrição</span>
+      <p>
+        Prestação de serviços de recursos humanos e suporte administrativo
+        conforme parâmetros da OS atual.
+      </p>
+    </div>
+
+    <div class="grade">
+      <div class="campo c3">
+        <span class="rotulo">Valor dos Serviços</span>
+        <span class="valor forte mono">R$ 300,00</span>
+      </div>
+      <div class="campo c3">
+        <span class="rotulo">Deduções</span>
+        <span class="valor mono">R$ 0,00</span>
+      </div>
+      <div class="campo c3">
+        <span class="rotulo">Base de Cálculo</span>
+        <span class="valor mono">R$ 300,00</span>
+      </div>
+      <div class="campo c3 fim-linha">
+        <span class="rotulo">Alíquota</span>
+        <span class="valor forte mono">3,00 %</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TOTAIS ============ -->
+  <section class="bloco">
+    <div class="faixa">Totais</div>
+
+    <div class="totais">
+      <div class="campo">
+        <span class="rotulo">Valor dos Serviços</span>
+        <span class="valor mono">R$ 300,00</span>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Alíquota</span>
+        <span class="valor mono">3,00 %</span>
+      </div>
+      <div class="campo">
+        <span class="rotulo">ISS Retido (2,00 %)</span>
+        <span class="valor forte mono">R$ 6,00</span>
+      </div>
+      <div class="campo fim-linha">
+        <span class="rotulo">Outras Retenções</span>
+        <span class="valor mono">R$ 0,00</span>
+      </div>
+    </div>
+
+    <div class="aviso">
+      ISS retido na fonte pelo tomador do serviço, nos termos da legislação municipal aplicável.
+    </div>
+
+    <div class="liquido">
+      <span class="rotulo">Valor líquido a receber</span>
+      <span class="cifra">R$ 294,00</span>
+    </div>
+  </section>
+
+  <!-- ============ AUTENTICIDADE ============ -->
+  <footer class="autenticidade">
+    <h3>Informações de Autenticidade</h3>
+    <p>
+      Código de verificação:
+      <span class="codigo preencher">____ ____ ____</span>
+      &nbsp;|&nbsp; Número da NFS-e:
+      <span class="codigo preencher">__________</span>
+    </p>
+    <p>
+      A autenticidade deste documento pode ser conferida no portal da NFS-e da
+      Prefeitura Municipal, informando o CNPJ do prestador
+      (52.518.853/0001-13) e o código de verificação acima.
+    </p>
+    <p>
+      Endereço de validação:
+      <span class="preencher">https://_________________________________</span>
+    </p>
+    <p>
+      Documento gerado eletronicamente. A validade fiscal depende do registro
+      correspondente no sistema da administração municipal.
+    </p>
+
+    <div class="rodape-legal">
+      Prestador: CNPJ 52.518.853/0001-13 &nbsp;&middot;&nbsp; IM 65591900 &nbsp;&middot;&nbsp;
+      Tomador: AMORE BOUTIQUE RH E ADMINISTRACAO LTDA &ndash; CNPJ 65.459.724/0001-43
+    </div>
+  </footer>
+
+</div>
+
+</body>
+</html>
