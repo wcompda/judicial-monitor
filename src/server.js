@@ -703,7 +703,7 @@ app.delete('/api/palavras-chave/:id', autenticar, async (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, timestamp: new Date().toISOString(), version: '2.0.0', db: 'postgresql' });
+  res.json({ success: true, timestamp: new Date().toISOString(), version: '2.2.0-djen', db: 'postgresql' });
 });
 
 // ── SPA fallback ─────────────────────────────────────────────────────────────
