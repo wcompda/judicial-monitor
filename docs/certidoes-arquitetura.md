@@ -1,8 +1,8 @@
 # Emissor de Certidões + Raio X Fiscal
 
 Emissão em lote de CND Federal, CRF/FGTS, CNDT, certidões estaduais e municipais, além da
-situação no Simples Nacional. O sistema faz uma varredura todo dia de madrugada e gera
-alertas preventivos (o "Raio X").
+situação no Simples Nacional. **Tudo roda sob demanda**: só emite quando alguém pede um lote ou
+a varredura do Raio X pela API. Não há agendamento automático.
 
 **Estratégia: zero web scraping.** Nenhum código deste módulo abre navegador ou resolve CAPTCHA.
 
@@ -47,14 +47,15 @@ alertas preventivos (o "Raio X").
   A falha final fica registrada como linha `ERRO` e vira alerta `FALHA_EMISSAO`.
 * **O Redis só guarda `{loteId, cnpj, tipo}`.** Certificado, senha e PDF nunca passam por ele.
 
-## Raio X Fiscal (agendamento diário)
+## Raio X Fiscal (sob demanda)
 
-`agendarRaioX()` registra um *job scheduler* do BullMQ (`RAIO_X_CRON`, padrão `7 3 * * *`, fuso
-`America/Sao_Paulo`). Como o agendamento fica no Redis, a varredura roda **uma única vez** por dia,
-mesmo com várias réplicas do worker.
+A varredura roda **só quando chamada** (`POST /api/certidoes/raio-x/executar`). Ela lê os CNPJs ativos com
+`Promise.all` em blocos de 50, decide o que re-emitir, alerta sobre vencimentos e certificados A1 perto
+do fim e dispara um lote `origem='raio_x'`.
 
-A varredura lê os CNPJs ativos com `Promise.all` em blocos de 50, decide o que re-emitir, alerta
-vencimentos e certificados A1 perto do fim e dispara um lote `origem='raio_x'`.
+Não existe agendamento automático. Quando `RAIO_X_CRON` está vazio (o padrão), o worker também apaga,
+ao subir, qualquer agendamento antigo gravado no Redis. Se um dia quiserem agendar, basta definir, por
+exemplo, `RAIO_X_CRON="0 10 * * 1"` (segunda às 10h, fuso `RAIO_X_TZ`).
 
 | Alerta | Severidade | Quando |
 |---|---|---|
@@ -69,9 +70,9 @@ vencimentos e certificados A1 perto do fim e dispara um lote `origem='raio_x'`.
 Os alertas são deduplicados por CNPJ, tipo, alerta e dia. Vão para os webhooks cadastrados
 (evento `certidao_alerta`) e, quando a severidade é alta, para o e-mail `EMAIL_TO`.
 
-`RAIO_X_REEMITIR_VIGENTES=true` (padrão) re-consulta tudo todo dia. É o que detecta débito novo mesmo
-com CND vigente, mas cada consulta é cobrada pelo broker/Serpro. Com `false`, as NEGATIVAS ainda válidas
-por mais de `RAIO_X_DIAS_REEMISSAO` dias são puladas.
+`RAIO_X_REEMITIR_VIGENTES=true` (padrão) re-consulta todos os tipos a cada varredura. É o que detecta
+débito novo mesmo com CND vigente, mas cada consulta é cobrada pelo broker/Serpro. Com `false`, as
+NEGATIVAS ainda válidas por mais de `RAIO_X_DIAS_REEMISSAO` dias são puladas.
 
 ## Certificado Digital A1
 
@@ -105,7 +106,7 @@ Associe o certificado à empresa com `certificadoId` em `POST /empresas` ou `POS
 docker compose up -d                 # Postgres + Redis + MinIO
 cp .env.example .env                 # preencha Serpro, Infosimples, CERT_MASTER_KEY, S3
 npm start                            # API (cria as tabelas cert_*)
-npm run worker:certidoes             # filas + agendamento do Raio X
+npm run worker:certidoes             # processa as filas (emissão e Raio X sob demanda)
 npm test
 ```
 

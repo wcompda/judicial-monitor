@@ -5,10 +5,15 @@ const { notificarAlertas } = require('./notificador');
 const { dispararLote } = require('../queue/dispatcher');
 const { FILAS, getQueue } = require('../queue/queues');
 
-// Agenda a varredura diária no BullMQ (idempotente: pode chamar a cada boot do worker).
-// Job scheduler no Redis = só UMA execução por horário, mesmo com vários workers rodando.
+// Agendamento OPCIONAL (padrão: desligado — a varredura roda só quando alguém pede pela API).
+// Sem RAIO_X_CRON, remove qualquer agendamento antigo que tenha ficado gravado no Redis.
+// Com RAIO_X_CRON, registra um job scheduler (uma execução por horário, mesmo com vários workers).
 async function agendarRaioX() {
   const { cron, tz } = config.raioX;
+  if (!cron) {
+    await getQueue(FILAS.raioX).removeJobScheduler('raio-x-diario');
+    return null;
+  }
   await getQueue(FILAS.raioX).upsertJobScheduler(
     'raio-x-diario',
     { pattern: cron, tz },
@@ -17,7 +22,7 @@ async function agendarRaioX() {
   return { cron, tz };
 }
 
-// Varredura da madrugada: todos os CNPJs ativos → decide o que emitir → dispara em paralelo.
+// Varredura sob demanda: todos os CNPJs ativos → decide o que emitir → dispara em paralelo.
 async function varredura() {
   const cfg = config.raioX;
   const empresas = await repo.listarEmpresasAtivas();

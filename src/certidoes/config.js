@@ -22,12 +22,13 @@ module.exports = {
     lote: int(process.env.CONCURRENCY_LOTE, 20),
   },
 
-  // Raio X Fiscal diário (horário de Brasília). Padrão: 03:07 todo dia.
+  // Raio X Fiscal — sob demanda (POST /api/certidoes/raio-x/executar).
+  // Sem agendamento automático por padrão; para agendar, defina RAIO_X_CRON (ex: '0 10 * * 1' = seg 10h).
   raioX: {
-    cron: process.env.RAIO_X_CRON || '7 3 * * *',
+    cron: process.env.RAIO_X_CRON || '',
     tz: process.env.RAIO_X_TZ || 'America/Sao_Paulo',
     diasAlertaVencimento: int(process.env.RAIO_X_DIAS_ALERTA_VENCIMENTO, 15),
-    // true = re-emite tudo todo dia (detecta débito novo mesmo com CND vigente; custa mais chamadas)
+    // true = re-emite todos os tipos a cada varredura (detecta débito novo mesmo com CND vigente; custa mais chamadas)
     // false = pula NEGATIVAS que ainda valem mais que diasReemissao
     reemitirVigentes: bool(process.env.RAIO_X_REEMITIR_VIGENTES, true),
     diasReemissao: int(process.env.RAIO_X_DIAS_REEMISSAO, 10),

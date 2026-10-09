@@ -10,9 +10,11 @@ const { fecharFilas } = require('./queue/queues');
 async function main() {
   await initCertidoesSchema();
   const workers = iniciarWorkers();
-  const { cron, tz } = await agendarRaioX();
+  const agenda = await agendarRaioX();
   console.log(`📄 Workers de certidões no ar (${workers.map((w) => w.name).join(', ')})`);
-  console.log(`🩻 Raio X Fiscal agendado: "${cron}" (${tz})`);
+  console.log(agenda
+    ? `🩻 Raio X Fiscal agendado: "${agenda.cron}" (${agenda.tz})`
+    : '🩻 Raio X Fiscal sob demanda (sem agendamento automático)');
 
   const desligar = async (sinal) => {
     console.log(`\n${sinal} recebido — finalizando jobs em andamento...`);

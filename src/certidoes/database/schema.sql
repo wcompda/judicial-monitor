@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS cert_empresas (
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Um lote = um disparo (manual via API ou Raio X da madrugada) com N CNPJs × M tipos
+-- Um lote = um disparo (lote manual ou varredura do Raio X, ambos sob demanda) com N CNPJs × M tipos
 CREATE TABLE IF NOT EXISTS cert_lotes (
   id             UUID PRIMARY KEY,
   origem         TEXT NOT NULL DEFAULT 'api',          -- 'api' | 'raio_x'

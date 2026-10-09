@@ -28,7 +28,7 @@ services:
       - key: AWS_SECRET_ACCESS_KEY
         sync: false
 
-  # Emissor de Certidões: filas BullMQ + Raio X diário (precisa de REDIS_URL e das variáveis do .env.example)
+  # Emissor de Certidões: filas BullMQ (emissão e Raio X sob demanda) (precisa de REDIS_URL e das variáveis do .env.example)
   - type: worker
     name: judicial-monitor-certidoes
     runtime: node

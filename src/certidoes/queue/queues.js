@@ -7,7 +7,7 @@ const { computeBackoff } = require('../core/backoff');
 //   federal → chamadas ao Serpro
 //   broker  → chamadas ao Infosimples (FGTS, trabalhista, estadual, municipal, simples)
 //   lote    → job-pai por CNPJ: roda quando TODOS os filhos terminam e aplica o Raio X
-//   raio-x  → agendador diário (job scheduler) que varre a carteira
+//   raio-x  → varredura da carteira, disparada sob demanda pela API
 const FILAS = Object.freeze({ federal: 'federal', broker: 'broker', lote: 'lote', raioX: 'raio-x' });
 
 let connection;
