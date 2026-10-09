@@ -5,3 +5,6 @@ judicial.db
 *.db-shm
 *.db-wal
 *.log
+
+# Listas de prospecção (dados de contato) não vão para o repositório
+marketing/prospeccao/saida/
