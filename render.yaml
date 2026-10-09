@@ -16,3 +16,42 @@ services:
         sync: false
       - key: DATABASE_URL
         sync: false
+      # API de certidões: enfileira lotes, recebe certificados A1 e gera links dos PDFs
+      - key: REDIS_URL
+        sync: false
+      - key: CERT_MASTER_KEY
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+
+  # Emissor de Certidões: filas BullMQ + Raio X diário (precisa de REDIS_URL e das variáveis do .env.example)
+  - type: worker
+    name: judicial-monitor-certidoes
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm run worker:certidoes
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: CERT_MASTER_KEY
+        sync: false
+      - key: SERPRO_CONSUMER_KEY
+        sync: false
+      - key: SERPRO_CONSUMER_SECRET
+        sync: false
+      - key: INFOSIMPLES_TOKEN
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false

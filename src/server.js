@@ -702,6 +702,11 @@ app.delete('/api/palavras-chave/:id', autenticar, async (req, res) => {
   res.json({ success: true });
 });
 
+// ── Emissor de Certidões (CND/CNDT/CRF) + Raio X Fiscal ─────────────────────
+// Processamento acontece no worker separado: npm run worker:certidoes
+
+app.use('/api/certidoes', require('./certidoes/api/routes').criarRotasCertidoes({ autenticar, isAdmin }));
+
 app.get('/api/health', (req, res) => {
   res.json({ success: true, timestamp: new Date().toISOString(), version: '2.2.0-djen', db: 'postgresql' });
 });
@@ -716,6 +721,7 @@ app.get('*', (req, res) => {
 
 async function start() {
   await initSchema();
+  await require('./certidoes/database/repository').initCertidoesSchema();
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🏛️  JudicialMonitor Backend rodando na porta ${PORT}`);
