@@ -22,7 +22,12 @@ Feche e abra o Claude Code de novo.
 
 No Claude Code, escreva:
 
-> **Configura meu Hermes conectado ao Claude Code e ao Codex, igual meu pai usa.**
+> **Configura meu Hermes conectado ao Claude Code e ao Codex, com o Diário de Ponte, igual meu pai usa.**
+
+O **Diário de Ponte** é uma pasta (`ponte`) com um arquivo por dia. Toda conversa, seja no
+Hermes, no Claude Code ou no Codex, lê o que foi feito antes quando começa e anota o que
+fez quando termina cada tarefa. Assim você pode fechar uma conversa e abrir outra (até
+em outra ferramenta) sem perder o fio.
 
 Ele vai seguir passo a passo. Quando chegar num **login**, ele vai pedir para você
 abrir um terminal e rodar um comando — você entra com **a sua conta** no navegador e

@@ -1,6 +1,6 @@
 ---
 name: conectar-hermes-claude-codex
-description: Guia passo a passo para montar o mesmo ambiente de trabalho da WCOM no computador de outra pessoa — Hermes Agent como central, com o ChatGPT (modelo GPT-5.6 Luna, pelo login da assinatura) como cérebro do Hermes, e o Claude Code e o Codex conectados como "braços" que o Hermes aciona. Instala o que falta, guia cada login (que a própria pessoa faz no navegador), importa as skills do Claude Code para o Hermes e faz um teste final. Use quando a pessoa disser "configura meu Hermes", "conecta o Hermes ao Claude Code", "conecta o Codex", "quero usar igual meu pai usa", "montar o ambiente", "instalar o Hermes".
+description: Guia passo a passo para montar o mesmo ambiente de trabalho da WCOM no computador de outra pessoa — Hermes Agent como central, com o ChatGPT (modelo GPT-5.6 Luna, pelo login da assinatura) como cérebro do Hermes, e o Claude Code e o Codex conectados como "braços" que o Hermes aciona. Instala o que falta, guia cada login (que a própria pessoa faz no navegador), importa as skills do Claude Code para o Hermes, liga o Diário de Ponte (toda conversa lê o que foi feito antes ao começar e deixa registrado o que fez ao terminar, nos três: Hermes, Claude Code e Codex) e faz um teste final. Use quando a pessoa disser "configura meu Hermes", "conecta o Hermes ao Claude Code", "conecta o Codex", "quero usar igual meu pai usa", "montar o ambiente", "instalar o Hermes", "diário de ponte", "ponte diária", "liga a ponte".
 ---
 
 # Conectar Hermes + Claude Code + Codex (jeito WCOM)
@@ -187,6 +187,125 @@ hermes gateway start
 
 Siga o assistente na tela. Para aprovar quem pode falar com o bot: `hermes pairing list`.
 
+## Passo 9 — Diário de Ponte (nenhuma conversa se perde)
+
+**O que é:** uma pasta com um arquivo por dia (`~/ponte/2026-11-03.md`, por exemplo). Toda conversa, no Hermes, no Claude Code ou no Codex:
+
+- **ao começar**, lê as últimas anotações da ponte para saber o que já foi feito;
+- **ao terminar cada tarefa**, escreve na ponte o que fez e o que ficou pendente.
+
+Assim a próxima conversa, em qualquer uma das três ferramentas, continua de onde a outra parou.
+
+> Seja honesto com a pessoa sobre um limite: nenhuma das três ferramentas "sabe" o momento exato em que a pessoa fecha a janela. Por isso a regra é **escrever na ponte ao terminar cada tarefa**, e não só no fim da conversa. Se a janela for fechada no meio de uma tarefa, aquela tarefa ainda não terá sido anotada.
+
+### 9.1 — Criar a pasta da ponte
+
+Mac/Linux:
+
+```
+mkdir -p ~/ponte
+```
+
+Windows (PowerShell):
+
+```
+mkdir $HOME\ponte
+```
+
+### 9.2 — As regras da ponte (o mesmo texto vai para os três)
+
+Este é o texto das regras. Ele vai ser colocado, **igual**, nos três arquivos de instrução global dos passos 9.3, 9.4 e 9.5. Antes de colar, **acrescente no fim do arquivo**: nunca apague o que já existe. Se o arquivo já tiver uma seção "Diário de Ponte", substitua só essa seção.
+
+```markdown
+## Diário de Ponte
+
+Existe uma pasta `~/ponte/` com um arquivo por dia (`AAAA-MM-DD.md`). Ela liga todas as
+conversas (Hermes, Claude Code e Codex) para nada se perder.
+
+**Ao começar uma conversa:** antes de responder ao primeiro pedido, leia o arquivo de hoje
+e o do último dia que existir antes dele (os dois mais recentes da pasta). Se o primeiro
+pedido tiver a ver com algo pendente, diga em uma linha o que encontrou ("Na ponte de ontem
+ficou pendente X").
+
+**Ao terminar cada tarefa** (não só no fim da conversa), acrescente uma entrada no fim do
+arquivo de hoje (crie o arquivo se não existir, com o título `# Ponte AAAA-MM-DD`):
+
+    ## HH:MM — <Hermes | Claude Code | Codex> — <assunto em poucas palavras>
+    - Feito: <o que foi feito, em 1 a 3 linhas>
+    - Onde: <pastas, arquivos, links, branch>
+    - Decidido: <decisões tomadas, se houver>
+    - Pendente: <o que falta e o próximo passo; "nada" se terminou>
+
+Quando a pessoa disser "tchau", "encerrar", "acabou por hoje" ou parecido, escreva a entrada
+final antes de se despedir.
+
+**Regras:**
+- Só acrescente; nunca apague nem reescreva entradas antigas.
+- Nunca escreva senhas, códigos de login, tokens, chaves ou dados de cartão na ponte.
+- Seja curto: a ponte é um resumo, não uma cópia da conversa.
+- Se você foi acionado por outro agente (por exemplo, o Hermes mandou você fazer uma tarefa
+  e o pedido diz "tarefa delegada"), **não escreva na ponte**: quem escreve é quem está
+  conversando com a pessoa.
+- O Hermes, quando delegar algo ao Claude Code ou ao Codex, começa o pedido com
+  "(tarefa delegada pelo Hermes — não escreva na ponte)" e depois anota ele mesmo o
+  resultado na ponte.
+```
+
+### 9.3 — Ponte no Claude Code
+
+1. Acrescente as regras do 9.2 no arquivo de instruções globais do Claude Code:
+   - Mac/Linux: `~/.claude/CLAUDE.md`
+   - Windows: `C:\Users\<usuário>\.claude\CLAUDE.md`
+
+2. Garanta a leitura automática com um *hook* de início de conversa. O hook roda sozinho e já entrega as últimas anotações para o Claude Code. Edite `~/.claude/settings.json` **juntando** com o que já existe (não apague outras configurações nem outros hooks) e adicione:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '=== DIARIO DE PONTE (ultimas anotacoes) ==='; for f in $(ls -1 ~/ponte/*.md 2>/dev/null | tail -n 2); do cat \"$f\"; done | tail -n 200"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+   No Windows, o Claude Code roda os hooks pelo Git Bash, então o mesmo comando costuma funcionar. Se não funcionar, troque `command` por um equivalente em PowerShell que mostre as últimas 200 linhas dos dois arquivos mais recentes de `$HOME\ponte`. Depois mostre para a pessoa o que mudou no arquivo.
+
+3. Teste: peça para a pessoa abrir uma conversa nova no Claude Code. As anotações da ponte devem aparecer no começo (ou o Claude deve dizer que leu a ponte).
+
+### 9.4 — Ponte no Codex
+
+Acrescente as regras do 9.2 no arquivo de instruções globais do Codex:
+
+- Mac/Linux: `~/.codex/AGENTS.md`
+- Windows: `C:\Users\<usuário>\.codex\AGENTS.md`
+
+(Crie o arquivo se não existir. O Codex lê esse arquivo em toda conversa.)
+
+### 9.5 — Ponte no Hermes
+
+Acrescente as regras do 9.2 no `SOUL.md` do Hermes. Ele é carregado em **toda** conversa do Hermes, inclusive pelo Telegram/WhatsApp:
+
+- Mac/Linux/WSL2: `~/.hermes/SOUL.md`
+- Windows nativo: o `SOUL.md` fica na pasta de instalação do Hermes (`%LOCALAPPDATA%\hermes`). Confirme o caminho com `hermes --help` ou com a documentação, se não achar.
+
+> Importante: **não** coloque as regras num `AGENTS.md` ou `CLAUDE.md` dentro de pastas de projeto. O Hermes só lê um desses por projeto, e as regras precisam valer em todo lugar. O lugar certo é o `SOUL.md`.
+
+### 9.6 — Teste da ponte
+
+1. No Claude Code: `Crie um arquivo teste-ponte.txt na pasta ~/teste-hermes.` Depois confira se apareceu uma entrada nova em `~/ponte/<hoje>.md`.
+2. Feche, abra uma conversa nova **no Hermes** e pergunte: `O que foi feito hoje segundo a ponte?` Ele deve citar o arquivo `teste-ponte.txt`.
+3. Repita a pergunta numa conversa nova do Codex.
+
+Se os três responderem certo: ✅ ponte funcionando.
+
 ---
 
 ## Resumo final (mostre assim)
@@ -201,6 +320,10 @@ Siga o assistente na tela. Para aprovar quem pode falar com o bot: `hermes pairi
 | Skills `claude-code` e `codex` no Hermes | ✅/❌ |
 | Skills do Claude Code importadas | ✅/❌ |
 | Teste Claude + Codex pelo Hermes | ✅/❌ |
+| Diário de Ponte: Claude Code (CLAUDE.md + hook) | ✅/❌ |
+| Diário de Ponte: Codex (AGENTS.md) | ✅/❌ |
+| Diário de Ponte: Hermes (SOUL.md) | ✅/❌ |
+| Teste da ponte entre os três | ✅/❌ |
 
 Termine dizendo o próximo passo que faltar, se houver. Nada de lista longa: um passo por vez.
 
@@ -210,4 +333,6 @@ Termine dizendo o próximo passo que faltar, se houver. Nada de lista longa: um 
 - **`npm install -g` dá erro de permissão (Mac/Linux)** → não usar `sudo` direto; rode `npm config get prefix` e siga a orientação oficial do npm, ou instale o Node pelo nvm.
 - **Login do Hermes com ChatGPT falha com erro de SSL/TLS** → tentar de novo em outra rede (às vezes é o Wi-Fi/antivírus); se continuar, `hermes auth add openai-codex --browser`.
 - **Codex diz que não é um repositório git** → rodar dentro de uma pasta com `git init`.
+- **A conversa nova não lembrou da ponte** → conferir se as regras estão no arquivo global certo (9.3, 9.4, 9.5) e se a pasta `~/ponte` tem arquivos; no Claude Code, rodar `/hooks` para ver se o hook de início está ativo.
+- **A ponte ficou com entradas repetidas** → o Claude Code ou o Codex escreveram numa tarefa delegada pelo Hermes; conferir se o Hermes está começando os pedidos com "(tarefa delegada pelo Hermes — não escreva na ponte)".
 - **Hermes não troca de provedor com `/model`** → `/model` só troca entre os já configurados; para configurar um novo, sair (`/quit`) e rodar `hermes model`.
