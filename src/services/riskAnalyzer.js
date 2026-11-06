@@ -114,9 +114,24 @@ const CATEGORIAS = {
 };
 
 // ── Análise básica por palavras-chave (estáticas + banco) ────────────────────
+// Avisos administrativos do tribunal (ex.: migração PJe -> EPROC). Chegam como
+// "intimação" no DJEN, mas não abrem prazo nem mudam nada no processo.
+const AVISO_ADMINISTRATIVO = [
+  /certid[aã]o de comunica[cç][aã]o de migra[cç][aã]o/,
+  /migra[cç][aã]o do processo para o sistema/,
+  /migrad[oa] para o (sistema )?(eproc|pje)/,
+  /intimad[oa]s? quanto [aà] migra[cç][aã]o/,
+];
+
+function ehAvisoAdministrativo(texto) {
+  const t = (texto || '').toLowerCase();
+  return AVISO_ADMINISTRATIVO.some(r => r.test(t));
+}
+
 function analyzeRisk(texto) {
   const t = (texto || '').toLowerCase();
   for (const p of RISK_RULES.vermelho) { if (t.includes(p)) return 'vermelho'; }
+  if (ehAvisoAdministrativo(t)) return 'azul';
   for (const p of RISK_RULES.amarelo)  { if (t.includes(p)) return 'amarelo';  }
   for (const p of RISK_RULES.verde)    { if (t.includes(p)) return 'verde';    }
   return 'azul';
@@ -251,4 +266,4 @@ function getRiskLabel(risco) {
   }[risco] || '🔵 INFORMATIVO';
 }
 
-module.exports = { analyzeRisk, analyzeRiskComDB, analyzeRiskIA, analyzeProcessoRisco, getRiskLabel, getCategoria };
+module.exports = { analyzeRisk, ehAvisoAdministrativo, analyzeRiskComDB, analyzeRiskIA, analyzeProcessoRisco, getRiskLabel, getCategoria };

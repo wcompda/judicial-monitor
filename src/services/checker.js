@@ -1,7 +1,7 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 const { query } = require('../database/db');
 const { buscarTodosProcessos, buscarMovimentacoes } = require('./datajud');
-const { analyzeRisk, analyzeRiskIA } = require('./riskAnalyzer');
+const { analyzeRisk, analyzeRiskIA, ehAvisoAdministrativo } = require('./riskAnalyzer');
 const { notificar } = require('./notifications');
 const { buscarContratos } = require('./pncp');
 const { buscarComunicacoes, normalizarComunicacao, parteConfere } = require('./djen');
@@ -198,7 +198,7 @@ async function verificarDJEN(pessoas) {
         if (existe.length) continue;
 
         let risco = analyzeRisk(c.textoLimpo);
-        if (risco === 'azul' && /intima|cita/i.test(c.tipo)) risco = 'amarelo';
+        if (risco === 'azul' && /intima|cita/i.test(c.tipo) && !ehAvisoAdministrativo(c.textoLimpo)) risco = 'amarelo';
         const recente = ehRecente(c.data);
 
         const { rows: [ins] } = await query(`
